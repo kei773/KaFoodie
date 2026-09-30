@@ -107,7 +107,7 @@ if ($result) {
   <?php else: ?>
     <div class="vendor-grid">
       <?php foreach ($vendors as $v): ?>
-        <div class="vendor-card">
+        <a href="customer/shop_menu.php?id=<?php echo $v['id']; ?>" class="vendor-card" style="text-decoration: none; color: inherit; display: block;">
           <div class="vendor-card-cover placeholder-photo">
             <span class="placeholder-emoji">🏪</span>
           </div>
@@ -122,7 +122,7 @@ if ($result) {
               <?php echo (int)$v['item_count']; ?> dish<?php echo $v['item_count'] == 1 ? '' : 'es'; ?> available
             </div>
           </div>
-        </div>
+        </a>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
