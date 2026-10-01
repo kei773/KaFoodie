@@ -97,7 +97,7 @@ if ($result) {
       <h2>Popular vendors</h2>
       <p>Loved by your neighbors, freshly made.</p>
     </div>
-    <a href="login_customer.php" class="btn-outline">Browse all vendors</a>
+    <a href="login.php" class="btn-outline">Browse all vendors</a>
   </div>
 
   <?php if (empty($vendors)): ?>
@@ -169,13 +169,13 @@ if ($result) {
     <div class="cta-col">
       <h3>Hungry?<br>Order now</h3>
       <p>Browse local Filipino vendors and get your favorites delivered fast.</p>
-      <a href="login_customer.php" class="btn-primary">Order now</a>
+      <a href="login.php" class="btn-primary">Order now</a>
     </div>
     <div class="cta-divider" aria-hidden="true"></div>
     <div class="cta-col">
       <h3>Own a food business?<br>Join KaFoodie</h3>
       <p>Become a KaFoodie vendor and reach thousands of hungry customers.</p>
-      <a href="login_vendor.php" class="btn-primary btn-light">Become a vendor</a>
+      <a href="vendor_signup.php" class="btn-primary btn-light">Become a vendor</a>
     </div>
   </div>
 </section>
@@ -204,13 +204,13 @@ if ($result) {
       <a href="#how-it-works">How it works</a>
       <a href="#vendors">Browse vendors</a>
       <a href="#">Help center</a>
-      <a href="login_customer.php">Log in</a>
+      <a href="login.php">Log in</a>
     </div>
 
     <div class="footer-col">
       <h4>For vendors</h4>
-      <a href="signup_vendor.php">Become a vendor</a>
-      <a href="login_vendor.php">Vendor login</a>
+      <a href="vendor_signup.php">Become a vendor</a>
+      <a href="login.php?role=shop">Vendor login</a>
       <a href="#">Vendor guidelines</a>
       <a href="#">Support</a>
     </div>

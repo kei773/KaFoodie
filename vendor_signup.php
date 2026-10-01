@@ -13,7 +13,7 @@ unset($_SESSION['signup_old']);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KaFoodie — Create an account</title>
+<title>KaFoodie — Vendor Registration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -50,7 +50,6 @@ unset($_SESSION['signup_old']);
         <img src="assets/images/forkspoon.svg" class="icon-p23" alt="">
         <img src="assets/images/bowl.svg" class="icon-p24" alt="">
         <img src="assets/images/burger.svg" class="icon-p25" alt="">
-        <!-- Added more for better density -->
         <img src="assets/images/drumstick.svg" class="icon-p26" alt="">
         <img src="assets/images/coffee.svg" class="icon-p27" alt="">
         <img src="assets/images/forkspoon.svg" class="icon-p28" alt="">
@@ -64,8 +63,8 @@ unset($_SESSION['signup_old']);
     </div>
 
     <div class="pitch">
-      <h1>Join your neighborhood's favorite food spots.</h1>
-      <p>Create an account to start ordering, delivering, or selling on KaFoodie.</p>
+      <h1>Grow your food business with KaFoodie.</h1>
+      <p>Reach thousands of hungry customers and manage your shop with ease.</p>
     </div>
 
     <div class="foot">© 2026 KaFoodie</div>
@@ -73,25 +72,25 @@ unset($_SESSION['signup_old']);
 
   <div class="login-form-side">
     <div class="login-card">
-      <h2>Create Account</h2>
-      <p class="sub">Join the community and start ordering your favorite food.</p>
+      <h2>Create a Vendor Account</h2>
+      <p class="sub">Register your business to start selling.</p>
 
       <?php if ($signup_error): ?>
         <div class="alert-error"><?php echo htmlspecialchars($signup_error); ?></div>
       <?php endif; ?>
 
       <form action="signup_process.php" method="POST">
-        <input type="hidden" name="role" value="customer">
+        <input type="hidden" name="role" value="shop">
 
         <div class="field">
-          <label for="name">Full name</label>
+          <label for="name">Full name (Business Owner)</label>
           <input type="text" id="name" name="name" placeholder="Juan Dela Cruz"
                  value="<?php echo htmlspecialchars($old['name'] ?? ''); ?>" required>
         </div>
 
         <div class="field">
-          <label for="email">Email address</label>
-          <input type="email" id="email" name="email" placeholder="you@email.com"
+          <label for="email">Business email</label>
+          <input type="email" id="email" name="email" placeholder="vendor@shop.com"
                  value="<?php echo htmlspecialchars($old['email'] ?? ''); ?>" required>
         </div>
 
@@ -109,7 +108,7 @@ unset($_SESSION['signup_old']);
       </form>
 
       <div class="signup-note" style="text-align:center; margin-bottom:15px;">
-        Are you a vendor? <a href="vendor_signup.php">Sign up as a vendor</a>
+        Looking for food? <a href="signup.php">Sign up as a customer</a>
       </div>
       <p class="signup-note">Already have an account? <a href="login.php">Log in</a></p>
     </div>
