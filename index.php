@@ -66,7 +66,7 @@ if ($result) {
 
       <div class="hero-buttons">
         <a href="login.php" class="btn-primary hero-btn">Order as customer</a>
-        <a href="login.php" class="btn-outline hero-btn">Sell on KaFoodie</a>
+        <a href="vendor_login.php" class="btn-outline hero-btn">Sell on KaFoodie</a>
       </div>
 
       <form action="customer/dashboard.php" method="GET" class="hero-search">
@@ -210,9 +210,8 @@ if ($result) {
     <div class="footer-col">
       <h4>For vendors</h4>
       <a href="vendor_signup.php">Become a vendor</a>
-      <a href="login.php?role=shop">Vendor login</a>
+      <a href="vendor_login.php">Vendor login</a>
       <a href="#">Vendor guidelines</a>
-      <a href="#">Support</a>
     </div>
   </div>
 

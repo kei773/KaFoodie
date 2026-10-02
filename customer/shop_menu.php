@@ -2,34 +2,32 @@
 session_start();
 require_once __DIR__ . '/../database/connection.php';
 
-// 1. Authentication check: Must be logged in as a customer
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'customer') {
     header('Location: ../login.php');
     exit;
 }
 
-// 2. Validate shop ID
 if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]])) {
-    header('Location: ../index.php');
+    header('Location: dashboard.php');
     exit;
 }
 
 $shop_id = (int)$_GET['id'];
 
-// 3. Fetch Shop Details
+// Shop details
 $shop_stmt = $con->prepare("SELECT shop_name, description FROM shops WHERE id = ?");
 $shop_stmt->bind_param("i", $shop_id);
 $shop_stmt->execute();
 $shop_result = $shop_stmt->get_result();
 $shop = $shop_result->fetch_assoc();
+$shop_stmt->close();
 
 if (!$shop) {
-    // Shop not found
-    header('Location: ../index.php');
+    header('Location: dashboard.php');
     exit;
 }
 
-// 4. Fetch Available Menu Items
+// Menu items
 $menu_stmt = $con->prepare("
     SELECT id, name, description, price, category, image_url
     FROM menu_items
@@ -40,6 +38,18 @@ $menu_stmt->bind_param("i", $shop_id);
 $menu_stmt->execute();
 $menu_result = $menu_stmt->get_result();
 $items = $menu_result->fetch_all(MYSQLI_ASSOC);
+$menu_stmt->close();
+
+$cart_count = array_sum(array_map('intval', $_SESSION['cart']['items'] ?? []));
+
+// Make an image URL safe to drop inside CSS url('...') (htmlspecialchars alone
+// would let a quote or bracket in the URL break out of the CSS string).
+function kf_css_url(string $url): string {
+    return htmlspecialchars(
+        str_replace(["'", '"', '(', ')', '\\', ' '], ['%27', '%22', '%28', '%29', '%5C', '%20'], $url),
+        ENT_QUOTES
+    );
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,20 +69,27 @@ $items = $menu_result->fetch_all(MYSQLI_ASSOC);
     <div class="dash-content dash-content-wide">
 
         <div class="shop-menu-header">
-            <a href="dashboard.php" class="btn-text" style="margin-bottom: 20px; display: inline-block;">← Back to all shops</a>
+            <div class="shop-menu-nav">
+                <a href="dashboard.php" class="cart-back">← Back to all shops</a>
+                <a href="cart.php" class="sd-cartbtn" aria-label="Open your cart (<?php echo $cart_count; ?> items)">
+                    <span class="cart-icon" aria-hidden="true"></span>
+                    <span>Cart</span>
+                    <span class="sd-badge<?php echo $cart_count === 0 ? ' is-zero' : ''; ?>"><?php echo $cart_count; ?></span>
+                </a>
+            </div>
 
             <div class="shop-info-row">
                 <div class="shop-logo-placeholder">
-                    <span class="placeholder-emoji" style="font-size: 3rem;">🏪</span>
+                    <span class="shop-logo-emoji">🏪</span>
                 </div>
                 <div class="shop-details">
                     <h1><?php echo htmlspecialchars($shop['shop_name']); ?></h1>
-                    <p><?php echo htmlspecialchars($shop['description'] ?? 'No description available.'); ?></p>
+                    <p><?php echo htmlspecialchars($shop['description'] ?: 'No description available.'); ?></p>
                 </div>
             </div>
         </div>
 
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+        <hr class="shop-divider">
 
         <?php if (empty($items)): ?>
             <div class="dash-card">
@@ -81,11 +98,12 @@ $items = $menu_result->fetch_all(MYSQLI_ASSOC);
         <?php else: ?>
             <div class="item-grid">
                 <?php foreach ($items as $item): ?>
-                    <?php $cat = trim($item['category']) !== '' ? $item['category'] : 'Uncategorized'; ?>
+                    <?php $cat = trim((string)$item['category']) !== '' ? trim($item['category']) : 'Uncategorized'; ?>
                     <div class="item-card">
+                        <?php /* image_url is per-item data, so it is the one inline style that has to stay */ ?>
                         <div class="item-thumb"
                              <?php if (!empty($item['image_url'])): ?>
-                                style="background-image:url('<?php echo htmlspecialchars($item['image_url']); ?>');"
+                                style="background-image:url('<?php echo kf_css_url($item['image_url']); ?>');"
                              <?php endif; ?>>
                             <?php if (empty($item['image_url'])): ?>
                                 <span class="item-thumb-fallback">🍽️</span>
@@ -102,7 +120,7 @@ $items = $menu_result->fetch_all(MYSQLI_ASSOC);
                             <?php endif; ?>
 
                             <form action="cart_add.php" method="POST" class="add-to-cart-form">
-                                <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
+                                <input type="hidden" name="item_id" value="<?php echo (int)$item['id']; ?>">
                                 <input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
                                 <button type="submit" class="btn-add-cart">Add to cart</button>
                             </form>
@@ -113,36 +131,5 @@ $items = $menu_result->fetch_all(MYSQLI_ASSOC);
         <?php endif; ?>
     </div>
 
-    <style>
-        .shop-menu-header {
-            margin-bottom: 30px;
-        }
-        .shop-info-row {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            margin-bottom: 20px;
-        }
-        .shop-logo-placeholder {
-            width: 100px;
-            height: 100px;
-            background: #fff;
-            border: 2px dashed #FF6B35;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        .shop-details h1 {
-            margin: 0;
-            color: #333;
-            font-size: 2rem;
-        }
-        .shop-details p {
-            margin: 5px 0 0 0;
-            color: #666;
-        }
-    </style>
 </body>
 </html>

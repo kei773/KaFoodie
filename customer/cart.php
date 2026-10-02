@@ -2,7 +2,7 @@
 session_start();
 require_once __DIR__ . '/../database/connection.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'customer') {
     header('Location: ../login.php');
     exit;
 }
@@ -13,39 +13,66 @@ unset($_SESSION['cart_notice']);
 
 $cart_items = [];
 $shop = null;
-$total = 0;
+$total = 0.0;
 
-if (!empty($cart['items'])) {
-    $item_ids = array_keys($cart['items']);
+if (!empty($cart['items']) && !empty($cart['shop_id'])) {
+    $shop_id  = (int)$cart['shop_id'];
+    $item_ids = array_map('intval', array_keys($cart['items']));
     $placeholders = implode(',', array_fill(0, count($item_ids), '?'));
-    $types = str_repeat('i', count($item_ids));
+    $types = 'i' . str_repeat('i', count($item_ids));
 
-    $stmt = $con->prepare("SELECT id, name, price FROM menu_items WHERE id IN ($placeholders)");
-    $stmt->bind_param($types, ...$item_ids);
+    // Only items that still exist, are still available, and belong to the cart's shop
+    $stmt = $con->prepare(
+        "SELECT id, name, price FROM menu_items
+         WHERE shop_id = ? AND is_available = 1 AND id IN ($placeholders)"
+    );
+    $stmt->bind_param($types, $shop_id, ...$item_ids);
     $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $qty = $cart['items'][$row['id']];
-        $subtotal = $row['price'] * $qty;
-        $total += $subtotal;
-        $cart_items[] = [
-            'id' => $row['id'],
-            'name' => $row['name'],
-            'price' => $row['price'],
-            'quantity' => $qty,
-            'subtotal' => $subtotal,
-        ];
+    $found = [];
+    foreach ($stmt->get_result() as $row) {
+        $found[(int)$row['id']] = $row;
     }
     $stmt->close();
 
-    if ($cart['shop_id']) {
+    // Keep the order the customer added things, and drop stale items from the session
+    foreach ($cart['items'] as $id => $qty) {
+        $id = (int)$id;
+        if (!isset($found[$id])) {
+            unset($_SESSION['cart']['items'][$id]);
+            continue;
+        }
+        $price    = (float)$found[$id]['price'];
+        $subtotal = $price * (int)$qty;
+        $total   += $subtotal;
+        $cart_items[] = [
+            'id'       => $id,
+            'name'     => $found[$id]['name'],
+            'price'    => $price,
+            'quantity' => (int)$qty,
+            'subtotal' => $subtotal,
+        ];
+    }
+
+    if (empty($_SESSION['cart']['items'])) {
+        $_SESSION['cart'] = ['shop_id' => null, 'items' => []];
+        $cart['shop_id']  = null;
+    } else {
         $stmt = $con->prepare("SELECT shop_name FROM shops WHERE id = ?");
-        $stmt->bind_param('i', $cart['shop_id']);
+        $stmt->bind_param('i', $shop_id);
         $stmt->execute();
         $shop = $stmt->get_result()->fetch_assoc();
         $stmt->close();
     }
+}
+
+// Back button: return to the menu of the shop being ordered from,
+// or to the shop list when the cart is empty.
+if (!empty($cart['shop_id'])) {
+    $back_url   = 'shop_menu.php?id=' . (int)$cart['shop_id'];
+    $back_label = '← Back to menu';
+} else {
+    $back_url   = 'dashboard.php';
+    $back_label = '← Back to shops';
 }
 ?>
 <!DOCTYPE html>
@@ -65,9 +92,18 @@ if (!empty($cart['items'])) {
 
 <div class="dash-content">
 
+  <div class="cart-topbar">
+    <a href="<?php echo htmlspecialchars($back_url); ?>" class="cart-back"><?php echo htmlspecialchars($back_label); ?></a>
+  </div>
+
   <div class="browse-greeting">
-    <h1>Your cart</h1>
-    <?php if ($shop): ?><p>Ordering from <?php echo htmlspecialchars($shop['shop_name']); ?></p><?php endif; ?>
+    <div class="cart-title-row">
+      <span class="cart-icon cart-logo" aria-hidden="true"></span>
+      <div>
+        <h1>Your cart</h1>
+        <?php if ($shop): ?><p>Ordering from <?php echo htmlspecialchars($shop['shop_name']); ?></p><?php endif; ?>
+      </div>
+    </div>
   </div>
 
   <?php if ($cart_notice): ?>
@@ -91,9 +127,9 @@ if (!empty($cart['items'])) {
 
             <form action="cart_update.php" method="POST" class="cart-qty-form">
               <input type="hidden" name="item_id" value="<?php echo $item['id']; ?>">
-              <button type="submit" name="action" value="decrease" class="qty-btn">−</button>
+              <button type="submit" name="action" value="decrease" class="qty-btn" aria-label="Decrease quantity">−</button>
               <span class="qty-value"><?php echo $item['quantity']; ?></span>
-              <button type="submit" name="action" value="increase" class="qty-btn">+</button>
+              <button type="submit" name="action" value="increase" class="qty-btn" aria-label="Increase quantity">+</button>
             </form>
 
             <div class="cart-row-subtotal">₱<?php echo number_format($item['subtotal'], 2); ?></div>

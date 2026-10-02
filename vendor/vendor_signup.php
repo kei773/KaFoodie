@@ -72,6 +72,7 @@ unset($_SESSION['signup_old']);
 
   <div class="login-form-side">
     <div class="login-card">
+      <a class="auth-back-link" href="index.php" aria-label="Return to KaFoodie home">&larr; Back to home</a>
       <h2>Create a Vendor Account</h2>
       <p class="sub">Register your business to start selling.</p>
 
@@ -79,8 +80,7 @@ unset($_SESSION['signup_old']);
         <div class="alert-error"><?php echo htmlspecialchars($signup_error); ?></div>
       <?php endif; ?>
 
-      <form action="signup_process.php" method="POST">
-        <input type="hidden" name="role" value="shop">
+      <form action="vendor_signup_process.php" method="POST">
 
         <div class="field">
           <label for="name">Full name (Business Owner)</label>
@@ -110,7 +110,7 @@ unset($_SESSION['signup_old']);
       <div class="signup-note" style="text-align:center; margin-bottom:15px;">
         Looking for food? <a href="signup.php">Sign up as a customer</a>
       </div>
-      <p class="signup-note">Already have an account? <a href="login.php">Log in</a></p>
+      <p class="signup-note">Already have an account? <a href="vendor_login.php">Log in</a></p>
     </div>
   </div>
 

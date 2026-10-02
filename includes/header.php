@@ -1,24 +1,27 @@
 <?php
-// Shared top navbar for every dashboard.
-$cart_count = 0;
-if (($_SESSION['role'] ?? '') === 'customer' && !empty($_SESSION['cart']['items'])) {
-    $cart_count = array_sum($_SESSION['cart']['items']);
-}
+
+$nav_role = $_SESSION['role'] ?? '';
+$nav_name = $_SESSION['name'] ?? '';
+
+$nav_logo = ($nav_role === 'vendor') ? trim((string)($_SESSION['logo_url'] ?? '')) : '';
 ?>
 <div class="dash-nav">
   <div class="dash-nav-brand">
-    <img class="dash-nav-logo" src="../assets/images/logo-mark.svg" alt="KaFoodie logo">
+    <span class="dash-nav-logo" role="img" aria-label="KaFoodie logo"></span>
     <span class="dash-nav-word">KaFoodie</span>
   </div>
   <div class="dash-nav-user">
-    <?php if ($_SESSION['role'] === 'customer'): ?>
-      <a href="cart.php" class="dash-nav-cart">
-        Cart
-        <?php if ($cart_count > 0): ?><span class="dash-nav-cart-count"><?php echo $cart_count; ?></span><?php endif; ?>
-      </a>
-    <?php endif; ?>
-    <span class="dash-nav-name"><?php echo htmlspecialchars($_SESSION['name']); ?></span>
-    <span class="dash-nav-role"><?php echo htmlspecialchars(ucfirst($_SESSION['role'])); ?></span>
+    <div class="dash-nav-profile">
+      <?php if ($nav_role === 'vendor'): ?>
+        <?php if ($nav_logo !== ''): ?>
+          <img class="dash-nav-avatar" src="<?php echo htmlspecialchars($nav_logo, ENT_QUOTES); ?>" alt="Your shop logo">
+        <?php else: ?>
+          <span class="dash-nav-avatar dash-nav-avatar-placeholder" role="img" aria-label="Shop logo placeholder">🏪</span>
+        <?php endif; ?>
+      <?php endif; ?>
+      <span class="dash-nav-name"><?php echo htmlspecialchars($nav_name); ?></span>
+    </div>
+    <span class="dash-nav-role"><?php echo htmlspecialchars(ucfirst($nav_role)); ?></span>
     <a href="../logout.php" class="dash-nav-logout">Log out</a>
   </div>
 </div>

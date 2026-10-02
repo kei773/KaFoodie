@@ -2,53 +2,63 @@
 session_start();
 require_once __DIR__ . '/../database/connection.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'customer') {
     header('Location: ../login.php');
     exit;
 }
 
-$sql = "
-    SELECT
-        s.id AS shop_id, s.shop_name, s.description AS shop_description,
-        mi.id AS item_id, mi.name AS item_name, mi.description AS item_description,
-        mi.price, mi.category, mi.image_url
-    FROM shops s
-    JOIN menu_items mi ON mi.shop_id = s.id
-    WHERE mi.is_available = 1
-    ORDER BY s.shop_name, mi.category, mi.name
-";
-$result = $con->query($sql);
-
-$shops = [];
-$categories = [];
-
-while ($row = $result->fetch_assoc()) {
-    $shop_id = $row['shop_id'];
-
-    if (!isset($shops[$shop_id])) {
-        $shops[$shop_id] = [
-            'shop_name'   => $row['shop_name'],
-            'description' => $row['shop_description'],
-            'items'       => [],
-        ];
-    }
-
-    $shops[$shop_id]['items'][] = $row;
-
-    $cat = trim($row['category']) !== '' ? $row['category'] : 'Uncategorized';
-    if (!in_array($cat, $categories)) {
-        $categories[] = $cat;
+if (!function_exists('kf_h')) {
+    function kf_h($value): string {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
 }
 
-sort($categories);
+// ---------- Shops (one row per shop, with menu summary) ----------
+$sql = "
+    SELECT
+        s.id, s.shop_name, s.description,
+        COUNT(mi.id)  AS item_count,
+        MIN(mi.price) AS min_price,
+        GROUP_CONCAT(DISTINCT NULLIF(TRIM(mi.category), '') ORDER BY NULLIF(TRIM(mi.category), '') SEPARATOR '||') AS cats
+    FROM shops s
+    LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
+    GROUP BY s.id, s.shop_name, s.description
+    ORDER BY (COUNT(mi.id) = 0), s.shop_name
+";
+$result = $con->query($sql);
+
+$shops          = [];
+$all_categories = [];
+$load_failed    = ($result === false);
+
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $row['cat_list'] = ($row['cats'] !== null && $row['cats'] !== '') ? explode('||', $row['cats']) : [];
+        foreach ($row['cat_list'] as $c) {
+            $all_categories[$c] = true;   // keys de-duplicate for us
+        }
+        $shops[] = $row;
+    }
+    $result->free();
+} else {
+    error_log('dashboard.php shop query failed: ' . $con->error);
+}
+$all_categories = array_keys($all_categories);
+sort($all_categories);
+
+$cart_count = array_sum(array_map('intval', $_SESSION['cart']['items'] ?? []));
+
+$initial_q = trim($_GET['q'] ?? '');
+
+$emojis = ['🍳', '🍢', '🍜', '🍗', '🍔', '☕', '🥘', '🍧'];
+$first  = explode(' ', trim($_SESSION['name'] ?? ''))[0] ?: 'foodie';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KaFoodie — Browse</title>
+<title>KaFoodie — Browse shops</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -58,96 +68,160 @@ sort($categories);
 
 <?php include __DIR__ . '/../includes/header.php'; ?>
 
-<div class="dash-content dash-content-wide">
+<div class="sd-wrap">
 
-  <div class="browse-greeting">
-    <h1>Good day, <?php echo htmlspecialchars($_SESSION['name']); ?></h1>
-    <p>What are you craving today?</p>
+  <div class="sd-top">
+    <div>
+      <h1>Good day, <?php echo kf_h($first); ?></h1>
+      <p>Pick a shop to see its menu and start your order.</p>
+    </div>
+    <a href="cart.php" class="sd-cartbtn" aria-label="Open your cart (<?php echo $cart_count; ?> items)">
+      <span class="cart-icon" aria-hidden="true"></span>
+      <span>Cart</span>
+      <span class="sd-badge<?php echo $cart_count === 0 ? ' is-zero' : ''; ?>"><?php echo $cart_count; ?></span>
+    </a>
   </div>
 
-  <?php if (empty($categories)): ?>
+  <?php if ($load_failed): ?>
+
+    <div class="alert-error">We couldn't load the shops right now. Please refresh the page or try again in a moment.</div>
+
+  <?php elseif (empty($shops)): ?>
 
     <div class="dash-card">
-      <p class="dash-empty">No shops have any available dishes yet — check back soon.</p>
+      <p class="dash-empty">No shops have joined KaFoodie yet — check back soon.</p>
     </div>
 
   <?php else: ?>
 
-    <div class="chip-row">
-      <button class="chip active" data-filter="all">All</button>
-      <?php foreach ($categories as $cat): ?>
-        <button class="chip" data-filter="<?php echo htmlspecialchars($cat); ?>">
-          <?php echo htmlspecialchars($cat); ?>
-        </button>
+    <!-- Search + category filter -->
+    <div class="sd-toolbar">
+      <div class="sd-search">
+        <span aria-hidden="true">🔎</span>
+        <input type="search" id="shopSearch" placeholder="Search shops or cuisines…"
+               aria-label="Search shops or cuisines"
+               value="<?php echo kf_h($initial_q); ?>" autocomplete="off">
+      </div>
+
+      <?php if (!empty($all_categories)): ?>
+        <div class="sd-chips" id="chipRow">
+          <button type="button" class="sd-chip active" data-filter="all">All</button>
+          <?php foreach ($all_categories as $cat): ?>
+            <button type="button" class="sd-chip" data-filter="<?php echo kf_h($cat); ?>"><?php echo kf_h($cat); ?></button>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <!-- Shop grid -->
+    <div class="sd-section-head">
+      <h2>Shops</h2>
+      <span class="sd-count" id="shopCount" aria-live="polite"></span>
+    </div>
+
+    <div class="sd-grid" id="shopGrid">
+      <?php foreach ($shops as $shop): ?>
+        <?php
+          $id        = (int)$shop['id'];
+          $items     = (int)$shop['item_count'];
+          $open      = $items > 0;
+          $search    = mb_strtolower($shop['shop_name'] . ' ' . ($shop['description'] ?? '') . ' ' . implode(' ', $shop['cat_list']));
+          $shown_cat = array_slice($shop['cat_list'], 0, 3);
+          $extra_cat = count($shop['cat_list']) - count($shown_cat);
+          $card_attr = 'class="sd-card' . ($open ? '' : ' sd-card-closed') . '"'
+                     . ' data-search="' . kf_h($search) . '"'
+                     . ' data-cats="' . kf_h(json_encode($shop['cat_list'], JSON_UNESCAPED_UNICODE)) . '"';
+        ?>
+        <?php if ($open): ?>
+          <a href="shop_menu.php?id=<?php echo $id; ?>" <?php echo $card_attr; ?>>
+        <?php else: ?>
+          <div <?php echo $card_attr; ?> aria-disabled="true">
+        <?php endif; ?>
+
+          <div class="sd-cover g<?php echo $id % 4; ?>">
+            <?php echo $emojis[$id % count($emojis)]; ?>
+            <span class="sd-pill"><?php echo $open ? $items . ' dish' . ($items === 1 ? '' : 'es') : 'No dishes yet'; ?></span>
+          </div>
+
+          <div class="sd-body">
+            <h3 class="sd-name"><?php echo kf_h($shop['shop_name']); ?></h3>
+            <p class="sd-desc"><?php echo kf_h($shop['description'] ?: 'Fresh, home-style food from a local kitchen.'); ?></p>
+
+            <?php if (!empty($shown_cat)): ?>
+              <div class="sd-tags">
+                <?php foreach ($shown_cat as $c): ?>
+                  <span class="sd-tag"><?php echo kf_h($c); ?></span>
+                <?php endforeach; ?>
+                <?php if ($extra_cat > 0): ?><span class="sd-tag">+<?php echo $extra_cat; ?></span><?php endif; ?>
+              </div>
+            <?php endif; ?>
+
+            <div class="sd-foot">
+              <span class="sd-from">
+                <?php if ($open): ?>From <strong>₱<?php echo number_format((float)$shop['min_price'], 2); ?></strong><?php else: ?>Coming soon<?php endif; ?>
+              </span>
+              <span class="sd-go"><?php echo $open ? 'View menu →' : 'Unavailable'; ?></span>
+            </div>
+          </div>
+
+        <?php echo $open ? '</a>' : '</div>'; ?>
       <?php endforeach; ?>
     </div>
 
-    <?php foreach ($shops as $shop_id => $shop): ?>
-      <div class="shop-section">
-        <div class="shop-section-head">
-          <h2><?php echo htmlspecialchars($shop['shop_name']); ?></h2>
-          <?php if (!empty($shop['description'])): ?>
-            <p><?php echo htmlspecialchars($shop['description']); ?></p>
-          <?php endif; ?>
-        </div>
-
-        <div class="item-grid">
-          <?php foreach ($shop['items'] as $item): ?>
-            <?php $cat = trim($item['category']) !== '' ? $item['category'] : 'Uncategorized'; ?>
-            <div class="item-card" data-category="<?php echo htmlspecialchars($cat); ?>">
-              <div class="item-thumb"
-                   <?php if (!empty($item['image_url'])): ?>
-                     style="background-image:url('<?php echo htmlspecialchars($item['image_url']); ?>');"
-                   <?php endif; ?>>
-                <?php if (empty($item['image_url'])): ?>
-                  <span class="item-thumb-fallback">🍽️</span>
-                <?php endif; ?>
-              </div>
-              <div class="item-body">
-                <div class="item-top">
-                  <span class="item-name"><?php echo htmlspecialchars($item['item_name']); ?></span>
-                  <span class="item-price">₱<?php echo number_format($item['price'], 2); ?></span>
-                </div>
-                <div class="item-category"><?php echo htmlspecialchars($cat); ?></div>
-                <?php if (!empty($item['item_description'])): ?>
-                  <div class="item-desc"><?php echo htmlspecialchars($item['item_description']); ?></div>
-                <?php endif; ?>
-
-                <form action="cart_add.php" method="POST" class="add-to-cart-form">
-                  <input type="hidden" name="item_id" value="<?php echo $item['item_id']; ?>">
-                  <input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
-                  <button type="submit" class="btn-add-cart">Add to cart</button>
-                </form>
-              </div>
-            </div>
-          <?php endforeach; ?>
-        </div>
-      </div>
-    <?php endforeach; ?>
+    <div class="sd-empty" id="noResults">
+      <div class="big">🍽️</div>
+      <strong>No shops match your search</strong>
+      <p>Try a different word or pick another category.</p>
+    </div>
 
   <?php endif; ?>
 
 </div>
 
 <script>
-  document.querySelectorAll('.chip').forEach(function(chip){
-    chip.addEventListener('click', function(){
-      document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+(function () {
+  var search  = document.getElementById('shopSearch');
+  var grid    = document.getElementById('shopGrid');
+  if (!search || !grid) return;
+
+  var cards   = Array.prototype.slice.call(grid.querySelectorAll('.sd-card'));
+  var chips   = document.querySelectorAll('.sd-chip');
+  var counter = document.getElementById('shopCount');
+  var empty   = document.getElementById('noResults');
+  var filter  = 'all';
+
+  function apply() {
+    var q = search.value.trim().toLowerCase();
+    var visible = 0;
+
+    cards.forEach(function (card) {
+      var cats = [];
+      try { cats = JSON.parse(card.dataset.cats || '[]'); } catch (e) {}
+
+      var matchCat  = (filter === 'all') || cats.indexOf(filter) !== -1;
+      var matchText = (q === '') || (card.dataset.search || '').indexOf(q) !== -1;
+      var show = matchCat && matchText;
+
+      card.classList.toggle('is-hidden', !show);
+      if (show) visible++;
+    });
+
+    counter.textContent = visible + (visible === 1 ? ' shop' : ' shops');
+    empty.classList.toggle('show', visible === 0);
+  }
+
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
       chip.classList.add('active');
-
-      var filter = chip.dataset.filter;
-
-      document.querySelectorAll('.item-card').forEach(function(card){
-        var show = (filter === 'all' || card.dataset.category === filter);
-        card.style.display = show ? '' : 'none';
-      });
-
-      document.querySelectorAll('.shop-section').forEach(function(section){
-        var anyVisible = section.querySelectorAll('.item-card:not([style*="display: none"])').length > 0;
-        section.style.display = anyVisible ? '' : 'none';
-      });
+      filter = chip.dataset.filter;
+      apply();
     });
   });
+
+  search.addEventListener('input', apply);
+  apply(); // honors ?q= coming from the landing page search
+})();
 </script>
 
 </body>

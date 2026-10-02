@@ -11,7 +11,7 @@ $role             = $_POST['role'] ?? '';
 function fail($message, $name, $email, $role) {
     $_SESSION['signup_error'] = $message;
     $_SESSION['signup_old'] = ['name' => $name, 'email' => $email, 'role' => $role];
-    header('Location: signup.php');
+    header('Location: ' . ($role === 'shop' ? 'vendor_signup.php' : 'signup.php'));
     exit;
 }
 
@@ -69,5 +69,5 @@ if ($role === 'shop') {
 }
 
 $_SESSION['login_success'] = 'Account created! You can now log in.';
-header('Location: login.php');
+header('Location: ' . ($role === 'shop' ? 'vendor_login.php' : 'login.php'));
 exit;

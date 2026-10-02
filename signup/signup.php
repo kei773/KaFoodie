@@ -73,6 +73,7 @@ unset($_SESSION['signup_old']);
 
   <div class="login-form-side">
     <div class="login-card">
+      <a class="auth-back-link" href="index.php" aria-label="Return to KaFoodie home">&larr; Back to home</a>
       <h2>Create Account</h2>
       <p class="sub">Join the community and start ordering your favorite food.</p>
 
