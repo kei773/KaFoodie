@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/database/connection.php';
+require_once __DIR__ . '/includes/helpers.php';
 
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] === 'customer') {
@@ -14,11 +15,11 @@ if (isset($_SESSION['user_id'])) {
 
 $vendors = [];
 $sql = "
-    SELECT s.id, s.shop_name, s.description,
+    SELECT s.id, s.shop_name, s.description, s.logo_url,
            COUNT(mi.id) AS item_count
     FROM shops s
     LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
-    GROUP BY s.id, s.shop_name, s.description
+    GROUP BY s.id, s.shop_name, s.description, s.logo_url
     ORDER BY s.shop_name
 ";
 $result = $con->query($sql);
@@ -47,8 +48,8 @@ if ($result) {
   </div>
 
   <div class="landing-nav-actions">
-    <a href="login.php" class="btn-text">Log in</a>
-    <a href="login.php" class="btn-primary btn-inline">Order now</a>
+    <a href="login/login.php" class="btn-text">Log in</a>
+    <a href="login/login.php" class="btn-primary btn-inline">Order now</a>
   </div>
 </header>
 
@@ -65,8 +66,8 @@ if ($result) {
       <p class="hero-sub">Order from local vendors near you — from silog breakfasts to sizzling sisig and cold halo-halo — fresh, fast, and always kapamilya-friendly.</p>
 
       <div class="hero-buttons">
-        <a href="login.php" class="btn-primary hero-btn">Order as customer</a>
-        <a href="vendor_login.php" class="btn-outline hero-btn">Sell on KaFoodie</a>
+        <a href="login/login.php" class="btn-primary hero-btn">Order as customer</a>
+        <a href="vendor/vendor_login.php" class="btn-outline hero-btn">Sell on KaFoodie</a>
       </div>
 
       <form action="customer/dashboard.php" method="GET" class="hero-search">
@@ -97,7 +98,7 @@ if ($result) {
       <h2>Popular vendors</h2>
       <p>Loved by your neighbors, freshly made.</p>
     </div>
-    <a href="login.php" class="btn-outline">Browse all vendors</a>
+    <a href="login/login.php" class="btn-outline">Browse all vendors</a>
   </div>
 
   <?php if (empty($vendors)): ?>
@@ -109,7 +110,7 @@ if ($result) {
       <?php foreach ($vendors as $v): ?>
         <a href="customer/shop_menu.php?id=<?php echo $v['id']; ?>" class="vendor-card" style="text-decoration: none; color: inherit; display: block;">
           <div class="vendor-card-cover placeholder-photo">
-            <span class="placeholder-emoji">🏪</span>
+            <?php if (!empty($v['logo_url'])): ?><img src="<?php echo htmlspecialchars(media_url($v['logo_url'], ''), ENT_QUOTES); ?>" alt=""><?php else: ?><span class="placeholder-emoji">🏪</span><?php endif; ?>
           </div>
           <div class="vendor-card-body">
             <div class="vendor-card-top">
@@ -169,13 +170,13 @@ if ($result) {
     <div class="cta-col">
       <h3>Hungry?<br>Order now</h3>
       <p>Browse local Filipino vendors and get your favorites delivered fast.</p>
-      <a href="login.php" class="btn-primary">Order now</a>
+      <a href="login/login.php" class="btn-primary">Order now</a>
     </div>
     <div class="cta-divider" aria-hidden="true"></div>
     <div class="cta-col">
       <h3>Own a food business?<br>Join KaFoodie</h3>
       <p>Become a KaFoodie vendor and reach thousands of hungry customers.</p>
-      <a href="vendor_signup.php" class="btn-primary btn-light">Become a vendor</a>
+      <a href="vendor/vendor_signup.php" class="btn-primary btn-light">Become a vendor</a>
     </div>
   </div>
 </section>
@@ -204,13 +205,13 @@ if ($result) {
       <a href="#how-it-works">How it works</a>
       <a href="#vendors">Browse vendors</a>
       <a href="#">Help center</a>
-      <a href="login.php">Log in</a>
+      <a href="login/login.php">Log in</a>
     </div>
 
     <div class="footer-col">
       <h4>For vendors</h4>
-      <a href="vendor_signup.php">Become a vendor</a>
-      <a href="vendor_login.php">Vendor login</a>
+      <a href="vendor/vendor_signup.php">Become a vendor</a>
+      <a href="vendor/vendor_login.php">Vendor login</a>
       <a href="#">Vendor guidelines</a>
     </div>
   </div>

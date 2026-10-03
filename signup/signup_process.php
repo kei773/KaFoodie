@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/database/connection.php';
+require_once __DIR__ . '/../database/connection.php';
 
 $name             = trim($_POST['name'] ?? '');
 $email            = trim($_POST['email'] ?? '');
@@ -11,7 +11,7 @@ $role             = $_POST['role'] ?? '';
 function fail($message, $name, $email, $role) {
     $_SESSION['signup_error'] = $message;
     $_SESSION['signup_old'] = ['name' => $name, 'email' => $email, 'role' => $role];
-    header('Location: ' . ($role === 'shop' ? 'vendor_signup.php' : 'signup.php'));
+    header('Location: ' . ($role === 'shop' ? '../vendor/vendor_signup.php' : 'signup.php'));
     exit;
 }
 
@@ -69,5 +69,5 @@ if ($role === 'shop') {
 }
 
 $_SESSION['login_success'] = 'Account created! You can now log in.';
-header('Location: ' . ($role === 'shop' ? 'vendor_login.php' : 'login.php'));
+header('Location: ' . ($role === 'shop' ? '../vendor/vendor_login.php' : '../login/login.php'));
 exit;

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/database/connection.php';
+require_once __DIR__ . '/../database/connection.php';
 
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
@@ -34,5 +34,5 @@ $_SESSION['user_id'] = $user['id'];
 $_SESSION['name'] = $user['name'];
 $_SESSION['role'] = 'shop';
 
-header('Location: shop/dashboard.php');
+header('Location: ../shop/dashboard.php');
 exit;

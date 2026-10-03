@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/database/connection.php';
+require_once __DIR__ . '/../database/connection.php';
 
 $signup_error = $_SESSION['signup_error'] ?? null;
 unset($_SESSION['signup_error']);
@@ -17,7 +17,7 @@ unset($_SESSION['signup_old']);
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 
@@ -25,41 +25,41 @@ unset($_SESSION['signup_old']);
 
   <div class="login-brand">
     <div class="login-icon-pattern">
-        <img src="assets/images/drumstick.svg" class="icon-p1" alt="">
-        <img src="assets/images/coffee.svg" class="icon-p2" alt="">
-        <img src="assets/images/forkspoon.svg" class="icon-p3" alt="">
-        <img src="assets/images/bowl.svg" class="icon-p4" alt="">
-        <img src="assets/images/burger.svg" class="icon-p5" alt="">
-        <img src="assets/images/drumstick.svg" class="icon-p6" alt="">
-        <img src="assets/images/coffee.svg" class="icon-p7" alt="">
-        <img src="assets/images/forkspoon.svg" class="icon-p8" alt="">
-        <img src="assets/images/bowl.svg" class="icon-p9" alt="">
-        <img src="assets/images/burger.svg" class="icon-p10" alt="">
-        <img src="assets/images/drumstick.svg" class="icon-p11" alt="">
-        <img src="assets/images/coffee.svg" class="icon-p12" alt="">
-        <img src="assets/images/forkspoon.svg" class="icon-p13" alt="">
-        <img src="assets/images/bowl.svg" class="icon-p14" alt="">
-        <img src="assets/images/burger.svg" class="icon-p15" alt="">
-        <img src="assets/images/drumstick.svg" class="icon-p16" alt="">
-        <img src="assets/images/coffee.svg" class="icon-p17" alt="">
-        <img src="assets/images/forkspoon.svg" class="icon-p18" alt="">
-        <img src="assets/images/bowl.svg" class="icon-p19" alt="">
-        <img src="assets/images/burger.svg" class="icon-p20" alt="">
-        <img src="assets/images/drumstick.svg" class="icon-p21" alt="">
-        <img src="assets/images/coffee.svg" class="icon-p22" alt="">
-        <img src="assets/images/forkspoon.svg" class="icon-p23" alt="">
-        <img src="assets/images/bowl.svg" class="icon-p24" alt="">
-        <img src="assets/images/burger.svg" class="icon-p25" alt="">
+        <img src="../assets/images/drumstick.svg" class="icon-p1" alt="">
+        <img src="../assets/images/coffee.svg" class="icon-p2" alt="">
+        <img src="../assets/images/forkspoon.svg" class="icon-p3" alt="">
+        <img src="../assets/images/bowl.svg" class="icon-p4" alt="">
+        <img src="../assets/images/burger.svg" class="icon-p5" alt="">
+        <img src="../assets/images/drumstick.svg" class="icon-p6" alt="">
+        <img src="../assets/images/coffee.svg" class="icon-p7" alt="">
+        <img src="../assets/images/forkspoon.svg" class="icon-p8" alt="">
+        <img src="../assets/images/bowl.svg" class="icon-p9" alt="">
+        <img src="../assets/images/burger.svg" class="icon-p10" alt="">
+        <img src="../assets/images/drumstick.svg" class="icon-p11" alt="">
+        <img src="../assets/images/coffee.svg" class="icon-p12" alt="">
+        <img src="../assets/images/forkspoon.svg" class="icon-p13" alt="">
+        <img src="../assets/images/bowl.svg" class="icon-p14" alt="">
+        <img src="../assets/images/burger.svg" class="icon-p15" alt="">
+        <img src="../assets/images/drumstick.svg" class="icon-p16" alt="">
+        <img src="../assets/images/coffee.svg" class="icon-p17" alt="">
+        <img src="../assets/images/forkspoon.svg" class="icon-p18" alt="">
+        <img src="../assets/images/bowl.svg" class="icon-p19" alt="">
+        <img src="../assets/images/burger.svg" class="icon-p20" alt="">
+        <img src="../assets/images/drumstick.svg" class="icon-p21" alt="">
+        <img src="../assets/images/coffee.svg" class="icon-p22" alt="">
+        <img src="../assets/images/forkspoon.svg" class="icon-p23" alt="">
+        <img src="../assets/images/bowl.svg" class="icon-p24" alt="">
+        <img src="../assets/images/burger.svg" class="icon-p25" alt="">
         <!-- Added more for better density -->
-        <img src="assets/images/drumstick.svg" class="icon-p26" alt="">
-        <img src="assets/images/coffee.svg" class="icon-p27" alt="">
-        <img src="assets/images/forkspoon.svg" class="icon-p28" alt="">
-        <img src="assets/images/bowl.svg" class="icon-p29" alt="">
-        <img src="assets/images/burger.svg" class="icon-p30" alt="">
+        <img src="../assets/images/drumstick.svg" class="icon-p26" alt="">
+        <img src="../assets/images/coffee.svg" class="icon-p27" alt="">
+        <img src="../assets/images/forkspoon.svg" class="icon-p28" alt="">
+        <img src="../assets/images/bowl.svg" class="icon-p29" alt="">
+        <img src="../assets/images/burger.svg" class="icon-p30" alt="">
     </div>
 
     <div class="brand-row">
-      <img class="mark" src="assets/images/logo-mark-reversed.svg" alt="KaFoodie logo">
+      <img class="mark" src="../assets/images/logo-mark-reversed.svg" alt="KaFoodie logo">
       <span class="brand-word">KaFoodie</span>
     </div>
 
@@ -73,7 +73,7 @@ unset($_SESSION['signup_old']);
 
   <div class="login-form-side">
     <div class="login-card">
-      <a class="auth-back-link" href="index.php" aria-label="Return to KaFoodie home">&larr; Back to home</a>
+      <a class="auth-back-link" href="../index.php" aria-label="Return to KaFoodie home">&larr; Back to home</a>
       <h2>Create Account</h2>
       <p class="sub">Join the community and start ordering your favorite food.</p>
 
@@ -110,9 +110,9 @@ unset($_SESSION['signup_old']);
       </form>
 
       <div class="signup-note" style="text-align:center; margin-bottom:15px;">
-        Are you a vendor? <a href="vendor_signup.php">Sign up as a vendor</a>
+        Are you a vendor? <a href="../vendor/vendor_signup.php">Sign up as a vendor</a>
       </div>
-      <p class="signup-note">Already have an account? <a href="login.php">Log in</a></p>
+      <p class="signup-note">Already have an account? <a href="../login/login.php">Log in</a></p>
     </div>
   </div>
 

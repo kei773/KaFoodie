@@ -1,9 +1,10 @@
 <?php
 session_start();
 require_once __DIR__ . '/../database/connection.php';
+require_once __DIR__ . '/../includes/helpers.php';
 
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'customer') {
-    header('Location: ../login.php');
+    header('Location: ../login/login.php');
     exit;
 }
 
@@ -15,7 +16,7 @@ if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT, ["optio
 $shop_id = (int)$_GET['id'];
 
 // Shop details
-$shop_stmt = $con->prepare("SELECT shop_name, description FROM shops WHERE id = ?");
+$shop_stmt = $con->prepare("SELECT shop_name, description, logo_url FROM shops WHERE id = ?");
 $shop_stmt->bind_param("i", $shop_id);
 $shop_stmt->execute();
 $shop_result = $shop_stmt->get_result();
@@ -41,6 +42,10 @@ $items = $menu_result->fetch_all(MYSQLI_ASSOC);
 $menu_stmt->close();
 
 $cart_count = array_sum(array_map('intval', $_SESSION['cart']['items'] ?? []));
+
+// One-time "added to cart" message from cart_add.php
+$menu_notice = $_SESSION['menu_notice'] ?? null;
+unset($_SESSION['menu_notice']);
 
 // Make an image URL safe to drop inside CSS url('...') (htmlspecialchars alone
 // would let a quote or bracket in the URL break out of the CSS string).
@@ -79,9 +84,15 @@ function kf_css_url(string $url): string {
             </div>
 
             <div class="shop-info-row">
-                <div class="shop-logo-placeholder">
-                    <span class="shop-logo-emoji">🏪</span>
-                </div>
+                <?php if (!empty($shop['logo_url'])): ?>
+                    <div class="shop-logo">
+                        <img src="<?php echo htmlspecialchars(media_url($shop['logo_url'], '../'), ENT_QUOTES); ?>" alt="<?php echo htmlspecialchars($shop['shop_name']); ?> logo">
+                    </div>
+                <?php else: ?>
+                    <div class="shop-logo-placeholder">
+                        <span class="shop-logo-emoji">🏪</span>
+                    </div>
+                <?php endif; ?>
                 <div class="shop-details">
                     <h1><?php echo htmlspecialchars($shop['shop_name']); ?></h1>
                     <p><?php echo htmlspecialchars($shop['description'] ?: 'No description available.'); ?></p>
@@ -99,11 +110,11 @@ function kf_css_url(string $url): string {
             <div class="item-grid">
                 <?php foreach ($items as $item): ?>
                     <?php $cat = trim((string)$item['category']) !== '' ? trim($item['category']) : 'Uncategorized'; ?>
-                    <div class="item-card">
+                    <div class="item-card" id="item-<?php echo (int)$item['id']; ?>">
                         <?php /* image_url is per-item data, so it is the one inline style that has to stay */ ?>
                         <div class="item-thumb"
                              <?php if (!empty($item['image_url'])): ?>
-                                style="background-image:url('<?php echo kf_css_url($item['image_url']); ?>');"
+                                style="background-image:url('<?php echo kf_css_url(media_url($item['image_url'], '../')); ?>');"
                              <?php endif; ?>>
                             <?php if (empty($item['image_url'])): ?>
                                 <span class="item-thumb-fallback">🍽️</span>
@@ -130,6 +141,27 @@ function kf_css_url(string $url): string {
             </div>
         <?php endif; ?>
     </div>
+
+    <?php if ($menu_notice): ?>
+        <div class="kf-toast" id="kfToast" role="status" aria-live="polite">
+            <span class="kf-toast-icon" aria-hidden="true">✓</span>
+            <span class="kf-toast-text"><?php echo htmlspecialchars($menu_notice); ?></span>
+            <a href="cart.php" class="kf-toast-link">View cart</a>
+            <button type="button" class="kf-toast-close" id="kfToastClose" aria-label="Dismiss">&times;</button>
+        </div>
+        <script>
+        (function () {
+            var toast = document.getElementById('kfToast');
+            if (!toast) return;
+            function hide() {
+                toast.classList.add('is-leaving');
+                setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
+            }
+            document.getElementById('kfToastClose').addEventListener('click', hide);
+            setTimeout(hide, 5000);
+        })();
+        </script>
+    <?php endif; ?>
 
 </body>
 </html>

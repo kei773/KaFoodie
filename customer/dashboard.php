@@ -1,9 +1,10 @@
 <?php
 session_start();
 require_once __DIR__ . '/../database/connection.php';
+require_once __DIR__ . '/../includes/helpers.php';
 
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'customer') {
-    header('Location: ../login.php');
+    header('Location: ../login/login.php');
     exit;
 }
 
@@ -16,13 +17,13 @@ if (!function_exists('kf_h')) {
 // ---------- Shops (one row per shop, with menu summary) ----------
 $sql = "
     SELECT
-        s.id, s.shop_name, s.description,
+        s.id, s.shop_name, s.description, s.logo_url,
         COUNT(mi.id)  AS item_count,
         MIN(mi.price) AS min_price,
         GROUP_CONCAT(DISTINCT NULLIF(TRIM(mi.category), '') ORDER BY NULLIF(TRIM(mi.category), '') SEPARATOR '||') AS cats
     FROM shops s
     LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
-    GROUP BY s.id, s.shop_name, s.description
+    GROUP BY s.id, s.shop_name, s.description, s.logo_url
     ORDER BY (COUNT(mi.id) = 0), s.shop_name
 ";
 $result = $con->query($sql);
@@ -139,7 +140,11 @@ $first  = explode(' ', trim($_SESSION['name'] ?? ''))[0] ?: 'foodie';
         <?php endif; ?>
 
           <div class="sd-cover g<?php echo $id % 4; ?>">
-            <?php echo $emojis[$id % count($emojis)]; ?>
+            <?php if (!empty($shop['logo_url'])): ?>
+              <img class="sd-cover-logo" src="<?php echo kf_h(media_url($shop['logo_url'], '../')); ?>" alt="">
+            <?php else: ?>
+              <?php echo $emojis[$id % count($emojis)]; ?>
+            <?php endif; ?>
             <span class="sd-pill"><?php echo $open ? $items . ' dish' . ($items === 1 ? '' : 'es') : 'No dishes yet'; ?></span>
           </div>
 

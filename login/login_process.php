@@ -63,5 +63,5 @@ $_SESSION['user_id'] = $user['id'];
 $_SESSION['name']    = $user['name'];
 $_SESSION['role']    = 'customer';
 
-header('Location: customer/dashboard.php');
+header('Location: ../customer/dashboard.php');
 exit;

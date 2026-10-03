@@ -1,14 +1,13 @@
 <?php
 session_start();
 require_once __DIR__ . '/../database/connection.php';
+require_once __DIR__ . '/../includes/helpers.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'shop') {
-    header('Location: ../login.php');
-    exit;
-}
+require_shop($con);
+require_post_csrf();
 
-$owner_id = $_SESSION['user_id'];
-$item_id  = $_POST['item_id'] ?? 0;
+$owner_id = (int)$_SESSION['user_id'];
+$item_id  = (int)($_POST['item_id'] ?? 0);
 
 $stmt = $con->prepare("
     UPDATE menu_items mi
@@ -20,5 +19,4 @@ $stmt->bind_param('ii', $item_id, $owner_id);
 $stmt->execute();
 $stmt->close();
 
-header('Location: dashboard.php');
-exit;
+redirect_dashboard('menu');

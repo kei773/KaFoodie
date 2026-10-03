@@ -4,11 +4,11 @@ session_start();
 // Already logged in? Go straight to the right dashboard.
 if (isset($_SESSION['user_id'], $_SESSION['role'])) {
     if ($_SESSION['role'] === 'customer') {
-        header('Location: customer/dashboard.php');
+        header('Location: ../customer/dashboard.php');
         exit;
     }
     if ($_SESSION['role'] === 'shop') {
-        header('Location: shop/dashboard.php');
+        header('Location: ../shop/dashboard.php');
         exit;
     }
 }
@@ -33,7 +33,7 @@ unset($_SESSION['login_error'], $_SESSION['login_success'], $_SESSION['login_old
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 <main class="customer-login">
@@ -41,8 +41,8 @@ unset($_SESSION['login_error'], $_SESSION['login_success'], $_SESSION['login_old
   <section class="customer-login-brand" aria-label="About KaFoodie">
     <span class="customer-login-orb customer-login-orb-top" aria-hidden="true"></span>
     <span class="customer-login-orb customer-login-orb-bottom" aria-hidden="true"></span>
-    <a class="customer-login-logo" href="index.php" aria-label="Return to KaFoodie home">
-      <img src="assets/images/logo-mark-reversed.svg" alt="">
+    <a class="customer-login-logo" href="../index.php" aria-label="Return to KaFoodie home">
+      <img src="../assets/images/logo-mark-reversed.svg" alt="">
       <span>KaFoodie</span>
     </a>
     <div class="customer-login-copy">
@@ -54,7 +54,7 @@ unset($_SESSION['login_error'], $_SESSION['login_success'], $_SESSION['login_old
   <section class="customer-login-form-side" aria-label="Customer sign in">
     <div class="customer-login-form-stack">
       <div class="customer-login-card">
-        <a class="auth-back-link" href="index.php">&larr; Back to home</a>
+        <a class="auth-back-link" href="../index.php">&larr; Back to home</a>
         <div class="customer-login-heading">
           <h2>Welcome back, foodie</h2>
           <p>Log in to continue your food adventure.</p>
@@ -85,10 +85,10 @@ unset($_SESSION['login_error'], $_SESSION['login_success'], $_SESSION['login_old
           <button type="submit" class="btn-primary">Log in</button>
         </form>
 
-        <p class="customer-login-links">New to KaFoodie? <a href="signup.php">Create an account</a></p>
+        <p class="customer-login-links">New to KaFoodie? <a href="../signup/signup.php">Create an account</a></p>
       </div>
 
-      <p class="customer-login-vendor">Are you a vendor? <a href="vendor_login.php">Vendor login</a></p>
+      <p class="customer-login-vendor">Are you a vendor? <a href="../vendor/vendor_login.php">Vendor login</a></p>
     </div>
   </section>
 

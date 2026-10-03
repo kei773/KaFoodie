@@ -4,11 +4,11 @@ session_start();
 // Already logged in? Go straight to the right dashboard.
 if (isset($_SESSION['user_id'], $_SESSION['role'])) {
     if ($_SESSION['role'] === 'shop') {
-        header('Location: shop/dashboard.php');
+        header('Location: ../shop/dashboard.php');
         exit;
     }
     if ($_SESSION['role'] === 'customer') {
-        header('Location: customer/dashboard.php');
+        header('Location: ../customer/dashboard.php');
         exit;
     }
 }
@@ -26,7 +26,7 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 <main class="vendor-login">
@@ -34,8 +34,8 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
   <section class="vendor-login-panel" aria-label="Vendor benefits">
     <span class="vendor-login-orb vendor-login-orb-top" aria-hidden="true"></span>
     <span class="vendor-login-orb vendor-login-orb-bottom" aria-hidden="true"></span>
-    <a class="vendor-login-brand" href="index.php" aria-label="Return to KaFoodie home">
-      <img src="assets/images/logo-mark-reversed.svg" alt="">
+    <a class="vendor-login-brand" href="../index.php" aria-label="Return to KaFoodie home">
+      <img src="../assets/images/logo-mark-reversed.svg" alt="">
       <span>KaFoodie</span>
     </a>
     <div class="vendor-login-copy">
@@ -46,13 +46,13 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
         <li><span class="vendor-login-check" aria-hidden="true">&#10003;</span><span>Get verified fast and start selling in days</span></li>
       </ul>
     </div>
-    <img class="vendor-login-shop" src="assets/images/shop.svg" alt="" aria-hidden="true">
+    <img class="vendor-login-shop" src="../assets/images/shop.svg" alt="" aria-hidden="true">
   </section>
 
   <section class="vendor-login-form-side" aria-label="Vendor sign in">
     <div class="vendor-login-form-stack">
       <div class="vendor-login-card">
-        <a class="auth-back-link" href="index.php">&larr; Back to home</a>
+        <a class="auth-back-link" href="../index.php">&larr; Back to home</a>
         <div class="vendor-login-heading">
           <h2>Vendor login</h2>
           <p>Manage your shop, menu and orders.</p>
@@ -79,7 +79,7 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
 
         <p class="signup-note">Want to sell on KaFoodie? <a href="vendor_signup.php">Apply as a vendor</a></p>
       </div>
-      <p class="vendor-login-customer-link">Are you a customer? <a href="login.php">Customer login</a></p>
+      <p class="vendor-login-customer-link">Are you a customer? <a href="../login/login.php">Customer login</a></p>
     </div>
   </section>
 

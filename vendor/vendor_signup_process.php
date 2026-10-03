@@ -3,4 +3,4 @@
 // server-side instead of being supplied by the browser.
 $_POST['role'] = 'shop';
 
-require __DIR__ . '/signup_process.php';
+require __DIR__ . '/../signup/signup_process.php';

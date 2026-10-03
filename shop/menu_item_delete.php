@@ -1,23 +1,44 @@
 <?php
 session_start();
 require_once __DIR__ . '/../database/connection.php';
+require_once __DIR__ . '/../includes/helpers.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'shop') {
-    header('Location: ../login.php');
-    exit;
+require_shop($con);
+require_post_csrf();
+
+$owner_id = (int)$_SESSION['user_id'];
+$item_id  = (int)($_POST['item_id'] ?? 0);
+
+// The vendor must have typed the word "delete" (checked here too, not just in the browser)
+if (strtolower(trim($_POST['confirm_text'] ?? '')) !== 'delete') {
+    flash('error', 'Nothing was deleted. Type the word “delete” to confirm.');
+    redirect_dashboard('menu');
 }
 
-$owner_id = $_SESSION['user_id'];
-$item_id  = $_POST['item_id'] ?? 0;
-
+// Find the item (and its photo) only if it belongs to this owner
 $stmt = $con->prepare("
-    DELETE mi FROM menu_items mi
+    SELECT mi.image_url
+    FROM menu_items mi
     JOIN shops s ON mi.shop_id = s.id
     WHERE mi.id = ? AND s.owner_id = ?
 ");
 $stmt->bind_param('ii', $item_id, $owner_id);
 $stmt->execute();
+$item = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-header('Location: dashboard.php');
-exit;
+if ($item) {
+    $stmt = $con->prepare("
+        DELETE mi FROM menu_items mi
+        JOIN shops s ON mi.shop_id = s.id
+        WHERE mi.id = ? AND s.owner_id = ?
+    ");
+    $stmt->bind_param('ii', $item_id, $owner_id);
+    $stmt->execute();
+    $stmt->close();
+
+    delete_local_image($item['image_url']);
+    flash('success', 'Item removed from your menu.');
+}
+
+redirect_dashboard('menu');

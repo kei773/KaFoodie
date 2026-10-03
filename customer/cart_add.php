@@ -5,7 +5,7 @@ require_once __DIR__ . '/../database/connection.php';
 const MAX_QTY_PER_ITEM = 99;
 
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'customer') {
-    header('Location: ../login.php');
+    header('Location: ../login/login.php');
     exit;
 }
 
@@ -23,7 +23,7 @@ if ($item_id <= 0 || $shop_id <= 0) {
 }
 
 // Make sure the item really exists, is available, and belongs to that shop
-$stmt = $con->prepare("SELECT id FROM menu_items WHERE id = ? AND shop_id = ? AND is_available = 1");
+$stmt = $con->prepare("SELECT id, name FROM menu_items WHERE id = ? AND shop_id = ? AND is_available = 1");
 $stmt->bind_param('ii', $item_id, $shop_id);
 $stmt->execute();
 $valid = $stmt->get_result()->fetch_assoc();
@@ -39,9 +39,10 @@ if (!isset($_SESSION['cart'])) {
 }
 
 // One shop per cart: switching shops starts a fresh cart
+$switched = false;
 if ($_SESSION['cart']['shop_id'] !== null && (int)$_SESSION['cart']['shop_id'] !== $shop_id) {
     $_SESSION['cart'] = ['shop_id' => null, 'items' => []];
-    $_SESSION['cart_notice'] = "Starting a new cart — your previous shop's items were cleared.";
+    $switched = true;
 }
 
 $_SESSION['cart']['shop_id'] = $shop_id;
@@ -49,5 +50,12 @@ $_SESSION['cart']['shop_id'] = $shop_id;
 $current = (int)($_SESSION['cart']['items'][$item_id] ?? 0);
 $_SESSION['cart']['items'][$item_id] = min($current + 1, MAX_QTY_PER_ITEM);
 
-header('Location: cart.php');
+// Stay on the shop's menu and confirm with a small notification
+$notice = '“' . $valid['name'] . '” added to your cart.';
+if ($switched) {
+    $notice .= ' Your previous cart was cleared because each order is from one shop.';
+}
+$_SESSION['menu_notice'] = $notice;
+
+header('Location: shop_menu.php?id=' . $shop_id . '#item-' . $item_id);
 exit;
