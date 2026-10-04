@@ -7,7 +7,7 @@ $shop    = require_shop($con);
 $shop_id = (int)$shop['id'];
 
 // Menu items
-$stmt = $con->prepare("SELECT id, name, description, price, category, image_url, is_available FROM menu_items WHERE shop_id = ? ORDER BY id DESC");
+$stmt = $con->prepare("SELECT id, name, description, price, category, image_url, image_mime, UNIX_TIMESTAMP(image_updated_at) AS image_v, is_available FROM menu_items WHERE shop_id = ? ORDER BY id DESC");
 $stmt->bind_param('i', $shop_id);
 $stmt->execute();
 $menu_items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -21,7 +21,7 @@ $item_old = $_SESSION['item_old'] ?? [];   unset($_SESSION['item_old']);
 // Which window to open on load (after saving / errors)
 $open = in_array($_GET['open'] ?? '', ['profile', 'add', 'menu'], true) ? $_GET['open'] : '';
 
-$logo_src = media_url($shop['logo_url'], '../');
+$logo_src = logo_src($shop, '../');
 $_SESSION['logo_url'] = $logo_src;   // used by includes/header.php
 $csrf = csrf_token();
 
@@ -192,7 +192,7 @@ function render_flash(?array $f): void {
       <p class="dash-empty">You haven't added any menu items yet. Close this window and use “Add a menu item”.</p>
     <?php else: ?>
       <div class="sh-menu-list">
-        <?php foreach ($menu_items as $item): $thumb = media_url($item['image_url'], '../'); ?>
+        <?php foreach ($menu_items as $item): $thumb = dish_src($item, '../'); ?>
           <div class="sh-menu-row<?= $item['is_available'] ? '' : ' is-off' ?>">
             <span class="sh-thumb" <?php if ($thumb): ?>style="background-image:url('<?= h($thumb) ?>')"<?php endif; ?>><?= $thumb ? '' : '🍽️' ?></span>
 

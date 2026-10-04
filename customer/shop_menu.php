@@ -16,7 +16,7 @@ if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT, ["optio
 $shop_id = (int)$_GET['id'];
 
 // Shop details
-$shop_stmt = $con->prepare("SELECT shop_name, description, logo_url FROM shops WHERE id = ?");
+$shop_stmt = $con->prepare("SELECT shop_name, description, logo_url, logo_mime, UNIX_TIMESTAMP(logo_updated_at) AS logo_v FROM shops WHERE id = ?");
 $shop_stmt->bind_param("i", $shop_id);
 $shop_stmt->execute();
 $shop_result = $shop_stmt->get_result();
@@ -28,9 +28,13 @@ if (!$shop) {
     exit;
 }
 
+$shop['id'] = $shop_id;
+$logo_src = logo_src($shop, '../');
+
 // Menu items
 $menu_stmt = $con->prepare("
-    SELECT id, name, description, price, category, image_url
+    SELECT id, name, description, price, category, image_url, image_mime,
+           UNIX_TIMESTAMP(image_updated_at) AS image_v
     FROM menu_items
     WHERE shop_id = ? AND is_available = 1
     ORDER BY category, name
@@ -84,9 +88,9 @@ function kf_css_url(string $url): string {
             </div>
 
             <div class="shop-info-row">
-                <?php if (!empty($shop['logo_url'])): ?>
+                <?php if ($logo_src !== ''): ?>
                     <div class="shop-logo">
-                        <img src="<?php echo htmlspecialchars(media_url($shop['logo_url'], '../'), ENT_QUOTES); ?>" alt="<?php echo htmlspecialchars($shop['shop_name']); ?> logo">
+                        <img src="<?php echo htmlspecialchars($logo_src, ENT_QUOTES); ?>" alt="<?php echo htmlspecialchars($shop['shop_name']); ?> logo">
                     </div>
                 <?php else: ?>
                     <div class="shop-logo-placeholder">
@@ -110,13 +114,14 @@ function kf_css_url(string $url): string {
             <div class="item-grid">
                 <?php foreach ($items as $item): ?>
                     <?php $cat = trim((string)$item['category']) !== '' ? trim($item['category']) : 'Uncategorized'; ?>
+                    <?php $img = dish_src($item, '../'); ?>
                     <div class="item-card" id="item-<?php echo (int)$item['id']; ?>">
                         <?php /* image_url is per-item data, so it is the one inline style that has to stay */ ?>
                         <div class="item-thumb"
-                             <?php if (!empty($item['image_url'])): ?>
-                                style="background-image:url('<?php echo kf_css_url(media_url($item['image_url'], '../')); ?>');"
+                             <?php if ($img !== ''): ?>
+                                style="background-image:url('<?php echo kf_css_url($img); ?>');"
                              <?php endif; ?>>
-                            <?php if (empty($item['image_url'])): ?>
+                            <?php if ($img === ''): ?>
                                 <span class="item-thumb-fallback">🍽️</span>
                             <?php endif; ?>
                         </div>

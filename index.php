@@ -15,11 +15,12 @@ if (isset($_SESSION['user_id'])) {
 
 $vendors = [];
 $sql = "
-    SELECT s.id, s.shop_name, s.description, s.logo_url,
+    SELECT s.id, s.shop_name, s.description, s.logo_url, s.logo_mime,
+           UNIX_TIMESTAMP(s.logo_updated_at) AS logo_v,
            COUNT(mi.id) AS item_count
     FROM shops s
     LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
-    GROUP BY s.id, s.shop_name, s.description, s.logo_url
+    GROUP BY s.id, s.shop_name, s.description, s.logo_url, s.logo_mime, s.logo_updated_at
     ORDER BY s.shop_name
 ";
 $result = $con->query($sql);
@@ -107,10 +108,10 @@ if ($result) {
     </div>
   <?php else: ?>
     <div class="vendor-grid">
-      <?php foreach ($vendors as $v): ?>
+      <?php foreach ($vendors as $v): $logo_src = logo_src($v, ''); ?>
         <a href="customer/shop_menu.php?id=<?php echo $v['id']; ?>" class="vendor-card" style="text-decoration: none; color: inherit; display: block;">
-          <div class="vendor-card-cover placeholder-photo">
-            <?php if (!empty($v['logo_url'])): ?><img src="<?php echo htmlspecialchars(media_url($v['logo_url'], ''), ENT_QUOTES); ?>" alt=""><?php else: ?><span class="placeholder-emoji">🏪</span><?php endif; ?>
+          <div class="vendor-card-cover placeholder-photo<?php echo $logo_src !== '' ? ' has-logo' : ''; ?>">
+            <?php if ($logo_src !== ''): ?><img class="vendor-card-logo" src="<?php echo htmlspecialchars($logo_src, ENT_QUOTES); ?>" alt=""><?php else: ?><span class="placeholder-emoji">🏪</span><?php endif; ?>
           </div>
           <div class="vendor-card-body">
             <div class="vendor-card-top">

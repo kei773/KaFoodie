@@ -922,9 +922,11 @@ button.sh-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);bord
 /* =====================================================================
    UPLOADED IMAGES ON CUSTOMER PAGES  (shop logos, dish photos in cart)
    ===================================================================== */
+/* Shop logo on the customer shop list: large, with the shop name and dishes below it */
+.sd-cover.has-logo{height:200px;}
 .sd-cover-logo{
-  width:84px;height:84px;border-radius:50%;object-fit:cover;display:block;
-  background:var(--white);border:3px solid var(--white);box-shadow:var(--shadow-md);
+  width:150px;height:150px;border-radius:26px;object-fit:cover;display:block;
+  background:var(--white);border:4px solid var(--white);box-shadow:var(--shadow-md);
 }
 .shop-logo{
   width:100px;height:100px;flex:none;border-radius:20px;overflow:hidden;
@@ -1002,3 +1004,27 @@ button.sh-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);bord
 }
 .sh-btn-danger:hover:not(:disabled){background:#8E1B12;}
 .sh-btn-danger:disabled{opacity:.4;cursor:not-allowed;}
+
+
+/* Shop logo on the landing page's "Popular vendors" cards */
+.vendor-card-cover{overflow:hidden;}
+.vendor-card-cover.has-logo{height:200px;}
+.vendor-card-cover .vendor-card-logo{
+  width:150px;height:150px;border-radius:26px;object-fit:cover;display:block;
+  background:var(--white);border:4px solid var(--white);box-shadow:var(--shadow-md);
+}
+
+
+/* =====================================================================
+   VENDOR LOGIN / SIGNUP: LEFT PANEL STAYS PUT
+   The panel used to stretch to the height of the page, so on the taller
+   signup page the shop illustration (anchored to the panel's bottom)
+   sat lower than on the login page. On desktop the panel is now exactly
+   one screen tall and pinned, so both pages look identical.
+   ===================================================================== */
+@media (min-width:861px) and (min-height:760px){
+  .vendor-login-panel{
+    position:sticky;top:0;align-self:flex-start;
+    height:100vh;height:100dvh;min-height:0;
+  }
+}

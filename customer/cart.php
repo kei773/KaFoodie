@@ -24,7 +24,7 @@ if (!empty($cart['items']) && !empty($cart['shop_id'])) {
 
     // Only items that still exist, are still available, and belong to the cart's shop
     $stmt = $con->prepare(
-        "SELECT id, name, price, image_url FROM menu_items
+        "SELECT id, name, price, image_url, image_mime, UNIX_TIMESTAMP(image_updated_at) AS image_v FROM menu_items
          WHERE shop_id = ? AND is_available = 1 AND id IN ($placeholders)"
     );
     $stmt->bind_param($types, $shop_id, ...$item_ids);
@@ -48,7 +48,7 @@ if (!empty($cart['items']) && !empty($cart['shop_id'])) {
         $cart_items[] = [
             'id'       => $id,
             'name'     => $found[$id]['name'],
-            'image'    => media_url($found[$id]['image_url'], '../'),
+            'image'    => dish_src($found[$id], '../'),
             'price'    => $price,
             'quantity' => (int)$qty,
             'subtotal' => $subtotal,
@@ -103,6 +103,7 @@ if (!empty($cart['shop_id'])) {
       <span class="cart-icon cart-logo" aria-hidden="true"></span>
       <div>
         <h1>Your cart</h1>
+        <?php if ($shop): ?><p>Ordering from <?php echo htmlspecialchars($shop['shop_name']); ?></p><?php endif; ?>
       </div>
     </div>
   </div>

@@ -16,17 +16,17 @@ $remove_image = !empty($_POST['remove_image']);
 
 // The item must belong to this owner
 $stmt = $con->prepare("
-    SELECT mi.image_url
+    SELECT mi.id
     FROM menu_items mi
     JOIN shops s ON mi.shop_id = s.id
     WHERE mi.id = ? AND s.owner_id = ?
 ");
 $stmt->bind_param('ii', $item_id, $owner_id);
 $stmt->execute();
-$item = $stmt->get_result()->fetch_assoc();
+$found = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if (!$item) {
+if (!$found) {
     flash('error', 'That menu item could not be found.');
     redirect_dashboard('menu');
 }
@@ -40,35 +40,47 @@ if (!is_numeric($price) || $price < 0) {
     redirect_dashboard('menu');
 }
 
-// Photo: keep the current one unless a new file was chosen or "remove" was ticked
-$image_url    = $item['image_url'];
+// Photo: replaced only when a new file was chosen, cleared only when "remove" was ticked
 $upload_error = null;
-$new_image    = save_uploaded_image($_FILES['image'] ?? [], 'menu', $upload_error);
-
+$image = read_uploaded_image($_FILES['image'] ?? [], $upload_error, $con);
 if ($upload_error) {
     flash('error', $upload_error);
     redirect_dashboard('menu');
 }
-if ($new_image) {
-    $image_url = $new_image;
-} elseif ($remove_image) {
-    $image_url = '';
-}
 
 $price = (float)$price;
-$stmt = $con->prepare("
-    UPDATE menu_items mi
-    JOIN shops s ON mi.shop_id = s.id
-    SET mi.name = ?, mi.description = ?, mi.price = ?, mi.category = ?, mi.image_url = ?
-    WHERE mi.id = ? AND s.owner_id = ?
-");
-$stmt->bind_param('ssdssii', $name, $description, $price, $category, $image_url, $item_id, $owner_id);
+
+if ($image) {
+    $data = $image['data'];
+    $mime = $image['mime'];
+    $stmt = $con->prepare("
+        UPDATE menu_items mi
+        JOIN shops s ON mi.shop_id = s.id
+        SET mi.name = ?, mi.description = ?, mi.price = ?, mi.category = ?,
+            mi.image_url = '', mi.image_data = ?, mi.image_mime = ?, mi.image_updated_at = NOW()
+        WHERE mi.id = ? AND s.owner_id = ?
+    ");
+    $stmt->bind_param('ssdsssii', $name, $description, $price, $category, $data, $mime, $item_id, $owner_id);
+} elseif ($remove_image) {
+    $stmt = $con->prepare("
+        UPDATE menu_items mi
+        JOIN shops s ON mi.shop_id = s.id
+        SET mi.name = ?, mi.description = ?, mi.price = ?, mi.category = ?,
+            mi.image_url = '', mi.image_data = NULL, mi.image_mime = NULL, mi.image_updated_at = NULL
+        WHERE mi.id = ? AND s.owner_id = ?
+    ");
+    $stmt->bind_param('ssdsii', $name, $description, $price, $category, $item_id, $owner_id);
+} else {
+    $stmt = $con->prepare("
+        UPDATE menu_items mi
+        JOIN shops s ON mi.shop_id = s.id
+        SET mi.name = ?, mi.description = ?, mi.price = ?, mi.category = ?
+        WHERE mi.id = ? AND s.owner_id = ?
+    ");
+    $stmt->bind_param('ssdsii', $name, $description, $price, $category, $item_id, $owner_id);
+}
 $stmt->execute();
 $stmt->close();
-
-if ($image_url !== $item['image_url']) {
-    delete_local_image($item['image_url']);
-}
 
 flash('success', '“' . $name . '” was updated.');
 redirect_dashboard('menu');

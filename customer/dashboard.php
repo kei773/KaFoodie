@@ -17,13 +17,14 @@ if (!function_exists('kf_h')) {
 // ---------- Shops (one row per shop, with menu summary) ----------
 $sql = "
     SELECT
-        s.id, s.shop_name, s.description, s.logo_url,
+        s.id, s.shop_name, s.description, s.logo_url, s.logo_mime,
+        UNIX_TIMESTAMP(s.logo_updated_at) AS logo_v,
         COUNT(mi.id)  AS item_count,
         MIN(mi.price) AS min_price,
         GROUP_CONCAT(DISTINCT NULLIF(TRIM(mi.category), '') ORDER BY NULLIF(TRIM(mi.category), '') SEPARATOR '||') AS cats
     FROM shops s
     LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
-    GROUP BY s.id, s.shop_name, s.description, s.logo_url
+    GROUP BY s.id, s.shop_name, s.description, s.logo_url, s.logo_mime, s.logo_updated_at
     ORDER BY (COUNT(mi.id) = 0), s.shop_name
 ";
 $result = $con->query($sql);
@@ -124,6 +125,7 @@ $first  = explode(' ', trim($_SESSION['name'] ?? ''))[0] ?: 'foodie';
       <?php foreach ($shops as $shop): ?>
         <?php
           $id        = (int)$shop['id'];
+          $logo_src  = logo_src($shop, '../');
           $items     = (int)$shop['item_count'];
           $open      = $items > 0;
           $search    = mb_strtolower($shop['shop_name'] . ' ' . ($shop['description'] ?? '') . ' ' . implode(' ', $shop['cat_list']));
@@ -139,9 +141,9 @@ $first  = explode(' ', trim($_SESSION['name'] ?? ''))[0] ?: 'foodie';
           <div <?php echo $card_attr; ?> aria-disabled="true">
         <?php endif; ?>
 
-          <div class="sd-cover g<?php echo $id % 4; ?>">
-            <?php if (!empty($shop['logo_url'])): ?>
-              <img class="sd-cover-logo" src="<?php echo kf_h(media_url($shop['logo_url'], '../')); ?>" alt="">
+          <div class="sd-cover g<?php echo $id % 4; ?><?php echo $logo_src !== '' ? ' has-logo' : ''; ?>">
+            <?php if ($logo_src !== ''): ?>
+              <img class="sd-cover-logo" src="<?php echo kf_h($logo_src); ?>" alt="">
             <?php else: ?>
               <?php echo $emojis[$id % count($emojis)]; ?>
             <?php endif; ?>

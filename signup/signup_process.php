@@ -15,7 +15,8 @@ function fail($message, $name, $email, $role) {
     exit;
 }
 
-$valid_roles = ['customer', 'rider', 'shop', 'admin'];
+// Only these two can be created from the website. Admin accounts are added directly in the database.
+$valid_roles = ['customer', 'shop'];
 
 if ($name === '' || $email === '' || $password === '' || $confirm_password === '' || $role === '') {
     fail('Please fill in all fields.', $name, $email, $role);
