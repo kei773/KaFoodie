@@ -7,7 +7,7 @@ $shop    = require_shop($con);
 $shop_id = (int)$shop['id'];
 
 // Menu items
-$stmt = $con->prepare("SELECT id, name, description, price, category, image_url, image_mime, UNIX_TIMESTAMP(image_updated_at) AS image_v, is_available FROM menu_items WHERE shop_id = ? ORDER BY id DESC");
+$stmt = $con->prepare("SELECT id, name, description, price, category, image_url, is_available FROM menu_items WHERE shop_id = ? ORDER BY id DESC");
 $stmt->bind_param('i', $shop_id);
 $stmt->execute();
 $menu_items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

@@ -15,18 +15,29 @@ if (strtolower(trim($_POST['confirm_text'] ?? '')) !== 'delete') {
     redirect_dashboard('menu');
 }
 
-// Deletes the row (and its photo, which is stored in the same row) only if it belongs to this owner
+// Find the item (and its photo) only if it belongs to this owner
 $stmt = $con->prepare("
-    DELETE mi FROM menu_items mi
+    SELECT mi.image_url
+    FROM menu_items mi
     JOIN shops s ON mi.shop_id = s.id
     WHERE mi.id = ? AND s.owner_id = ?
 ");
 $stmt->bind_param('ii', $item_id, $owner_id);
 $stmt->execute();
-$deleted = $stmt->affected_rows > 0;
+$item = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if ($deleted) {
+if ($item) {
+    $stmt = $con->prepare("
+        DELETE mi FROM menu_items mi
+        JOIN shops s ON mi.shop_id = s.id
+        WHERE mi.id = ? AND s.owner_id = ?
+    ");
+    $stmt->bind_param('ii', $item_id, $owner_id);
+    $stmt->execute();
+    $stmt->close();
+
+    delete_local_image($item['image_url']);
     flash('success', 'Item removed from your menu.');
 }
 

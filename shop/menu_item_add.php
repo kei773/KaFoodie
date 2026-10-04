@@ -27,25 +27,15 @@ if (!is_numeric($price) || $price < 0) {
 }
 
 $upload_error = null;
-$image = read_uploaded_image($_FILES['image'] ?? [], $upload_error, $con);
+$image_url    = save_uploaded_image($_FILES['image'] ?? [], 'menu', $upload_error);
 if ($upload_error) {
     fail_item($upload_error);
 }
+$image_url = $image_url ?? '';
 
 $price = (float)$price;
-
-if ($image) {
-    $data = $image['data'];
-    $mime = $image['mime'];
-    $stmt = $con->prepare("INSERT INTO menu_items
-        (shop_id, name, description, price, category, image_url, image_data, image_mime, image_updated_at)
-        VALUES (?, ?, ?, ?, ?, '', ?, ?, NOW())");
-    $stmt->bind_param('issdsss', $shop_id, $name, $description, $price, $category, $data, $mime);
-} else {
-    $stmt = $con->prepare("INSERT INTO menu_items (shop_id, name, description, price, category, image_url)
-        VALUES (?, ?, ?, ?, ?, '')");
-    $stmt->bind_param('issds', $shop_id, $name, $description, $price, $category);
-}
+$stmt = $con->prepare("INSERT INTO menu_items (shop_id, name, description, price, category, image_url) VALUES (?, ?, ?, ?, ?, ?)");
+$stmt->bind_param('issdss', $shop_id, $name, $description, $price, $category, $image_url);
 $stmt->execute();
 $stmt->close();
 

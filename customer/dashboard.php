@@ -17,14 +17,13 @@ if (!function_exists('kf_h')) {
 // ---------- Shops (one row per shop, with menu summary) ----------
 $sql = "
     SELECT
-        s.id, s.shop_name, s.description, s.logo_url, s.logo_mime,
-        UNIX_TIMESTAMP(s.logo_updated_at) AS logo_v,
+        s.id, s.shop_name, s.description, s.logo_url,
         COUNT(mi.id)  AS item_count,
         MIN(mi.price) AS min_price,
         GROUP_CONCAT(DISTINCT NULLIF(TRIM(mi.category), '') ORDER BY NULLIF(TRIM(mi.category), '') SEPARATOR '||') AS cats
     FROM shops s
     LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
-    GROUP BY s.id, s.shop_name, s.description, s.logo_url, s.logo_mime, s.logo_updated_at
+    GROUP BY s.id, s.shop_name, s.description, s.logo_url
     ORDER BY (COUNT(mi.id) = 0), s.shop_name
 ";
 $result = $con->query($sql);

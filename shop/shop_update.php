@@ -16,33 +16,31 @@ if ($shop_name === '') {
     redirect_dashboard('profile');
 }
 
-// Logo: replaced only when a new file was chosen, cleared only when "remove" was ticked
+// Logo: keep the current one unless a new file was chosen or "remove" was ticked
+$logo_url     = $shop['logo_url'];
 $upload_error = null;
-$logo = read_uploaded_image($_FILES['logo'] ?? [], $upload_error, $con);
+$new_logo     = save_uploaded_image($_FILES['logo'] ?? [], 'logos', $upload_error);
 
 if ($upload_error) {
     flash('error', $upload_error);
     redirect_dashboard('profile');
 }
 
-if ($logo) {
-    $data = $logo['data'];
-    $mime = $logo['mime'];
-    $stmt = $con->prepare("UPDATE shops
-        SET shop_name = ?, description = ?, logo_data = ?, logo_mime = ?, logo_updated_at = NOW(), logo_url = NULL
-        WHERE id = ?");
-    $stmt->bind_param('ssssi', $shop_name, $description, $data, $mime, $shop_id);
+if ($new_logo) {
+    $logo_url = $new_logo;
 } elseif ($remove_logo) {
-    $stmt = $con->prepare("UPDATE shops
-        SET shop_name = ?, description = ?, logo_data = NULL, logo_mime = NULL, logo_updated_at = NULL, logo_url = NULL
-        WHERE id = ?");
-    $stmt->bind_param('ssi', $shop_name, $description, $shop_id);
-} else {
-    $stmt = $con->prepare("UPDATE shops SET shop_name = ?, description = ? WHERE id = ?");
-    $stmt->bind_param('ssi', $shop_name, $description, $shop_id);
+    $logo_url = null;
 }
+
+$stmt = $con->prepare("UPDATE shops SET shop_name = ?, description = ?, logo_url = ? WHERE id = ?");
+$stmt->bind_param('sssi', $shop_name, $description, $logo_url, $shop_id);
 $stmt->execute();
 $stmt->close();
+
+// Remove the old file only after the database points at the new state
+if ($logo_url !== $shop['logo_url']) {
+    delete_local_image($shop['logo_url']);
+}
 
 flash('success', 'Shop profile updated.');
 redirect_dashboard();
