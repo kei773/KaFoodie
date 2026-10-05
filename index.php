@@ -32,7 +32,7 @@ if ($result) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KaFoodie — Your neighborhood's food, delivered</title>
+<title>KaFoodie — Your neighborhood's food.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -62,8 +62,8 @@ if ($result) {
 
   <div class="hero-inner">
     <div class="hero-copy">
-      <h1>Your favorite Filipino <span>comfort food</span>, delivered.</h1>
-      <p class="hero-sub">Order from local vendors near you — from silog breakfasts to sizzling sisig and cold halo-halo — fresh, fast, and always kapamilya-friendly.</p>
+      <h1>Your favorite Filipino <span>comfort foods</span>.</h1>
+      <p class="hero-sub">Order from local vendors near you — from silog breakfasts to sizzling sisig and cold halo-halo.</p>
 
       <div class="hero-buttons">
         <a href="login/login.php" class="btn-primary hero-btn">Order as customer</a>
@@ -169,7 +169,7 @@ if ($result) {
   <div class="cta-band-inner">
     <div class="cta-col">
       <h3>Hungry?<br>Order now</h3>
-      <p>Browse local Filipino vendors and get your favorites delivered fast.</p>
+      <p>Browse local Filipino vendors and get your favorites.</p>
       <a href="login/login.php" class="btn-primary">Order now</a>
     </div>
     <div class="cta-divider" aria-hidden="true"></div>
