@@ -39,7 +39,6 @@ unset($_SESSION['admin_login_error'], $_SESSION['admin_login_old_email']);
 
     <div class="pitch">
       <h1>Admin console</h1>
-      <p>Review shops and keep KaFoodie trustworthy for customers.</p>
     </div>
 
     <div class="foot">&copy; 2026 KaFoodie</div>
