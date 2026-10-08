@@ -6,6 +6,21 @@ require_once __DIR__ . '/../includes/helpers.php';
 $shop    = require_shop($con);
 $shop_id = (int)$shop['id'];
 
+// Document verification status, shown on the verification card
+$verif_labels = [
+    'not_submitted' => 'Not submitted',
+    'pending'       => 'Pending review',
+    'approved'      => 'Verified',
+    'rejected'      => 'Not approved',
+];
+$stmt = $con->prepare("SELECT verification_status FROM shops WHERE id = ?");
+$stmt->bind_param('i', $shop_id);
+$stmt->execute();
+$vrow = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+$verif_status = $vrow['verification_status'] ?? 'not_submitted';
+$verif_label  = $verif_labels[$verif_status] ?? 'Not submitted';
+
 // Menu items
 $stmt = $con->prepare("SELECT id, name, description, price, category, image_url, is_available FROM menu_items WHERE shop_id = ? ORDER BY id DESC");
 $stmt->bind_param('i', $shop_id);
@@ -82,12 +97,12 @@ function render_flash(?array $f): void {
       <span class="sh-card-sub"><?= $item_count ?> item<?= $item_count === 1 ? '' : 's' ?> · set availability or delete.</span>
     </button>
 
-    <div class="sh-card sh-card-soon" aria-disabled="true">
+    <a class="sh-card sh-card-link" href="verification.php">
       <span class="sh-card-icon" aria-hidden="true">📄</span>
       <span class="sh-card-title">Document verification</span>
       <span class="sh-card-sub">Upload your business documents for admin review.</span>
-      <span class="sh-badge">Coming soon</span>
-    </div>
+      <span class="sh-badge sh-badge-<?= h($verif_status) ?>"><?= h($verif_label) ?></span>
+    </a>
 
   </div>
 </div>

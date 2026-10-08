@@ -7,6 +7,19 @@ unset($_SESSION['signup_error']);
 
 $old = $_SESSION['signup_old'] ?? [];
 unset($_SESSION['signup_old']);
+
+// Which step to reopen after an error (1 = account, 2 = business details)
+$start_step = (int)($_SESSION['signup_step'] ?? 1);
+unset($_SESSION['signup_step']);
+if ($start_step !== 2) { $start_step = 1; }
+
+// Keep these lists identical to the ones in signup/signup_process.php
+$categories = ['Restaurant', 'Cafe', 'Bakery', 'Food stall / Carinderia', 'Home-based kitchen'];
+$cuisines   = ['Filipino', 'Fast food', 'Pizza', 'Burgers', 'Chicken', 'Asian', 'Desserts & snacks', 'Coffee & tea', 'Other'];
+
+function old_val($old, $key, $default = '') {
+    return htmlspecialchars((string)($old[$key] ?? $default), ENT_QUOTES, 'UTF-8');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,30 +62,81 @@ unset($_SESSION['signup_old']);
           <p>Register your business to start selling.</p>
         </div>
 
+        <ol class="signup-steps" aria-label="Registration progress">
+          <li class="signup-step" id="stepTab1" data-step="1">Your account</li>
+          <li class="signup-step" id="stepTab2" data-step="2">Your business</li>
+        </ol>
+
         <?php if ($signup_error): ?>
           <div class="alert-error" role="alert"><?php echo htmlspecialchars($signup_error, ENT_QUOTES, 'UTF-8'); ?></div>
         <?php endif; ?>
 
-        <form action="vendor_signup_process.php" method="POST">
-          <div class="field">
-            <label for="name">Full name (business owner)</label>
-            <input type="text" id="name" name="name" placeholder="Juan Dela Cruz" autocomplete="name"
-                   value="<?php echo htmlspecialchars($old['name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
+        <div class="alert-error" id="stepError" role="alert" hidden></div>
+
+        <form action="vendor_signup_process.php" method="POST" id="vendorSignupForm" novalidate>
+
+          <!-- Step 1: account -->
+          <div class="signup-pane" id="pane1" data-step="1">
+            <div class="field">
+              <label for="name">Full name (business owner)</label>
+              <input type="text" id="name" name="name" placeholder="Juan Dela Cruz" autocomplete="name"
+                     value="<?php echo old_val($old, 'name'); ?>" required>
+            </div>
+            <div class="field">
+              <label for="email">Business email</label>
+              <input type="email" id="email" name="email" placeholder="vendor@shop.com" autocomplete="email"
+                     value="<?php echo old_val($old, 'email'); ?>" required>
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" placeholder="At least 6 characters"
+                     autocomplete="new-password" minlength="6" required>
+            </div>
+            <div class="field">
+              <label for="confirm_password">Confirm password</label>
+              <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter your password"
+                     autocomplete="new-password" required>
+            </div>
+            <button type="button" class="btn-primary" id="nextBtn">Continue to business details</button>
           </div>
-          <div class="field">
-            <label for="email">Business email</label>
-            <input type="email" id="email" name="email" placeholder="vendor@shop.com" autocomplete="email"
-                   value="<?php echo htmlspecialchars($old['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
+
+          <!-- Step 2: business details -->
+          <div class="signup-pane" id="pane2" data-step="2">
+            <div class="field">
+              <label for="business_name">Business name</label>
+              <input type="text" id="business_name" name="business_name" placeholder="Pizza Town" maxlength="150"
+                     value="<?php echo old_val($old, 'business_name'); ?>" required>
+            </div>
+            <div class="field">
+              <label for="business_category">Business category</label>
+              <select id="business_category" name="business_category" required>
+                <option value="" disabled <?php echo empty($old['business_category']) ? 'selected' : ''; ?>>Choose a category</option>
+                <?php foreach ($categories as $c): ?>
+                  <option value="<?php echo htmlspecialchars($c, ENT_QUOTES, 'UTF-8'); ?>"
+                    <?php echo (($old['business_category'] ?? '') === $c) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($c, ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cuisine">Cuisine</label>
+              <select id="cuisine" name="cuisine" required>
+                <option value="" disabled <?php echo empty($old['cuisine']) ? 'selected' : ''; ?>>Choose a cuisine</option>
+                <?php foreach ($cuisines as $c): ?>
+                  <option value="<?php echo htmlspecialchars($c, ENT_QUOTES, 'UTF-8'); ?>"
+                    <?php echo (($old['cuisine'] ?? '') === $c) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($c, ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="signup-actions">
+              <button type="button" class="btn-outline" id="backBtn">Back</button>
+              <button type="submit" class="btn-primary">Create account</button>
+            </div>
           </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="At least 6 characters" autocomplete="new-password" required>
-          </div>
-          <div class="field">
-            <label for="confirm_password">Confirm password</label>
-            <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter your password" autocomplete="new-password" required>
-          </div>
-          <button type="submit" class="btn-primary">Create account</button>
+
         </form>
 
         <p class="signup-note">Already have an account? <a href="vendor_login.php">Log in</a></p>
@@ -82,5 +146,69 @@ unset($_SESSION['signup_old']);
   </section>
 
 </main>
+
+<script>
+(function () {
+  var form   = document.getElementById('vendorSignupForm');
+  var panes  = { 1: document.getElementById('pane1'), 2: document.getElementById('pane2') };
+  var tabs   = { 1: document.getElementById('stepTab1'), 2: document.getElementById('stepTab2') };
+  var errBox = document.getElementById('stepError');
+
+  function showStep(n) {
+    for (var i = 1; i <= 2; i++) {
+      panes[i].hidden = (i !== n);
+      tabs[i].classList.toggle('is-current', i === n);
+      tabs[i].classList.toggle('is-done', i < n);
+      if (i === n) { tabs[i].setAttribute('aria-current', 'step'); }
+      else { tabs[i].removeAttribute('aria-current'); }
+    }
+    errBox.hidden = true;
+    var first = panes[n].querySelector('input, select');
+    if (first) { first.focus(); }
+  }
+
+  function stepOneError() {
+    var name = form.name.value.trim();
+    var email = form.email.value.trim();
+    if (!name || !email || !form.password.value || !form.confirm_password.value) {
+      return 'Please fill in all fields.';
+    }
+    if (!form.email.checkValidity()) { return 'Please enter a valid email address.'; }
+    if (form.password.value.length < 6) { return 'Password must be at least 6 characters.'; }
+    if (form.password.value !== form.confirm_password.value) { return 'Passwords do not match.'; }
+    return '';
+  }
+
+  function stepTwoError() {
+    if (!form.business_name.value.trim() || !form.business_category.value || !form.cuisine.value) {
+      return 'Please fill in your business details.';
+    }
+    return '';
+  }
+
+  function showError(msg) {
+    errBox.textContent = msg;
+    errBox.hidden = false;
+  }
+
+  document.getElementById('nextBtn').addEventListener('click', function () {
+    var msg = stepOneError();
+    if (msg) { showError(msg); return; }
+    showStep(2);
+  });
+
+  document.getElementById('backBtn').addEventListener('click', function () { showStep(1); });
+
+  form.addEventListener('submit', function (e) {
+    var msg = stepOneError();
+    if (msg) { e.preventDefault(); showStep(1); showError(msg); return; }
+    msg = stepTwoError();
+    if (msg) { e.preventDefault(); showError(msg); }
+  });
+
+  // Without JavaScript both panes stay visible; with it, show one step at a time.
+  showStep(<?php echo $start_step; ?>);
+})();
+</script>
 </body>
 </html>

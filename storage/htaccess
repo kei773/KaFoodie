@@ -1,0 +1,2 @@
+# Uploaded documents are never opened by URL. Only PHP (shop/view_document.php) reads them.
+Require all denied
