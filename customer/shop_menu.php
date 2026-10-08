@@ -16,14 +16,16 @@ if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT, ["optio
 $shop_id = (int)$_GET['id'];
 
 // Shop details
-$shop_stmt = $con->prepare("SELECT shop_name, description, logo_url FROM shops WHERE id = ?");
+$shop_stmt = $con->prepare("SELECT shop_name, description, logo_url FROM shops WHERE id = ? AND verification_status = 'approved'");
 $shop_stmt->bind_param("i", $shop_id);
 $shop_stmt->execute();
 $shop_result = $shop_stmt->get_result();
 $shop = $shop_result->fetch_assoc();
 $shop_stmt->close();
 
+// Missing, or not approved by the admin yet: customers cannot open it
 if (!$shop) {
+    $_SESSION['dash_notice'] = 'That shop is not available.';
     header('Location: dashboard.php');
     exit;
 }

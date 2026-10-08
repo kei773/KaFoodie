@@ -174,7 +174,10 @@ function render_flash(?array $f): void {
         </div>
         <div class="field">
           <label for="price">Price (₱)</label>
-          <input type="number" id="price" name="price" step="0.01" min="0" placeholder="0.00" value="<?= h($item_old['price'] ?? '') ?>" required>
+          <div class="price-input">
+            <span class="price-sign" aria-hidden="true">₱</span>
+            <input type="text" id="price" name="price" class="js-price" inputmode="decimal" maxlength="11" autocomplete="off" placeholder="0.00" value="<?= h($item_old['price'] ?? '') ?>" required>
+          </div>
         </div>
       </div>
 
@@ -278,7 +281,10 @@ function render_flash(?array $f): void {
         </div>
         <div class="field">
           <label for="edit-price">Price (₱)</label>
-          <input type="number" id="edit-price" name="price" step="0.01" min="0" required>
+          <div class="price-input">
+            <span class="price-sign" aria-hidden="true">₱</span>
+            <input type="text" id="edit-price" name="price" class="js-price" inputmode="decimal" maxlength="11" autocomplete="off" placeholder="0.00" required>
+          </div>
         </div>
       </div>
 
@@ -328,6 +334,12 @@ function render_flash(?array $f): void {
   </div>
 </dialog>
 
+<style>
+  .price-input{position:relative;}
+  .price-input .price-sign{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-weight:600;color:var(--muted);pointer-events:none;}
+  .field .price-input input{padding-left:36px;}
+</style>
+
 <script>
 (function () {
   // Open a window from its card
@@ -364,6 +376,7 @@ function render_flash(?array $f): void {
       document.getElementById('edit-id').value          = d.id;
       document.getElementById('edit-name').value        = d.name;
       document.getElementById('edit-price').value       = d.price;
+      formatPrice(document.getElementById('edit-price'));
       document.getElementById('edit-category').value    = d.category;
       document.getElementById('edit-description').value = d.description;
       form.elements['image'].value = '';
@@ -396,6 +409,29 @@ function render_flash(?array $f): void {
   delInput.addEventListener('input', function () { delSubmit.disabled = !delMatches(); });
   document.getElementById('delete-form').addEventListener('submit', function (e) {
     if (!delMatches()) e.preventDefault();
+  });
+
+  // Price fields: numbers only, max 2 decimals, shown as 99.00 when you leave the field
+  function cleanPrice(v) {
+    v = v.replace(/[^0-9.]/g, '');
+    var i = v.indexOf('.');
+    if (i !== -1) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, '').slice(0, 2);
+    return v;
+  }
+  function formatPrice(inp) {
+    var v = cleanPrice(inp.value);
+    if (v === '' || v === '.') { inp.value = ''; return; }
+    var n = parseFloat(v);
+    inp.value = isNaN(n) ? '' : n.toFixed(2);
+  }
+  document.querySelectorAll('.js-price').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      var c = cleanPrice(inp.value);
+      if (c !== inp.value) inp.value = c;
+    });
+    inp.addEventListener('blur', function () { formatPrice(inp); });
+    inp.form.addEventListener('submit', function () { formatPrice(inp); });
+    formatPrice(inp);
   });
 
   // Reopen the right window after saving / an error

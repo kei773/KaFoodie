@@ -15,6 +15,7 @@ if (!function_exists('kf_h')) {
 }
 
 // ---------- Shops (one row per shop, with menu summary) ----------
+// Only shops the admin has approved are shown to customers.
 $sql = "
     SELECT
         s.id, s.shop_name, s.description, s.logo_url,
@@ -23,6 +24,7 @@ $sql = "
         GROUP_CONCAT(DISTINCT NULLIF(TRIM(mi.category), '') ORDER BY NULLIF(TRIM(mi.category), '') SEPARATOR '||') AS cats
     FROM shops s
     LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
+    WHERE s.verification_status = 'approved'
     GROUP BY s.id, s.shop_name, s.description, s.logo_url
     ORDER BY (COUNT(mi.id) = 0), s.shop_name
 ";
@@ -48,6 +50,10 @@ $all_categories = array_keys($all_categories);
 sort($all_categories);
 
 $cart_count = array_sum(array_map('intval', $_SESSION['cart']['items'] ?? []));
+
+// One-time message, e.g. when a shop link is not available (set by shop_menu.php)
+$dash_notice = $_SESSION['dash_notice'] ?? null;
+unset($_SESSION['dash_notice']);
 
 $initial_q = trim($_GET['q'] ?? '');
 
@@ -83,6 +89,10 @@ $first  = explode(' ', trim($_SESSION['name'] ?? ''))[0] ?: 'foodie';
     </a>
   </div>
 
+  <?php if ($dash_notice): ?>
+    <div class="alert-error" role="alert"><?php echo kf_h($dash_notice); ?></div>
+  <?php endif; ?>
+
   <?php if ($load_failed): ?>
 
     <div class="alert-error">We couldn't load the shops right now. Please refresh the page or try again in a moment.</div>
@@ -90,7 +100,7 @@ $first  = explode(' ', trim($_SESSION['name'] ?? ''))[0] ?: 'foodie';
   <?php elseif (empty($shops)): ?>
 
     <div class="dash-card">
-      <p class="dash-empty">No shops have joined KaFoodie yet — check back soon.</p>
+      <p class="dash-empty">No shops are open on KaFoodie yet — check back soon.</p>
     </div>
 
   <?php else: ?>

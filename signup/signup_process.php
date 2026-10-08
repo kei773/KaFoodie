@@ -1,9 +1,10 @@
 <?php
 session_start();
 require_once __DIR__ . '/../database/connection.php';
+require_once __DIR__ . '/../includes/otp_helpers.php';
 
 $name             = trim($_POST['name'] ?? '');
-$email            = trim($_POST['email'] ?? '');
+$email            = strtolower(trim($_POST['email'] ?? ''));
 $password         = $_POST['password'] ?? '';
 $confirm_password = $_POST['confirm_password'] ?? '';
 $role             = $_POST['role'] ?? '';
@@ -90,35 +91,24 @@ $stmt->close();
 
 $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-// Create the user and (for vendors) the shop together, so a failure
-// never leaves a vendor account without a shop.
-$con->begin_transaction();
+// The account is NOT created yet. We save the details as a pending signup and
+// email a one-time code. The user (and shop) are created in verify_email.php
+// once the correct code is entered.
+$token = otp_start_signup($con, [
+    'role'              => $role,
+    'name'              => $name,
+    'email'             => $email,
+    'password_hash'     => $password_hash,
+    'business_name'     => $business_name,
+    'business_category' => $business_category,
+    'cuisine'           => $cuisine,
+], $send_error);
 
-try {
-    $stmt = $con->prepare("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param('ssss', $name, $email, $password_hash, $role);
-    $stmt->execute();
-    $owner_id = $con->insert_id;
-    $stmt->close();
-
-    if ($role === 'shop') {
-        // The business name becomes the shop name customers see.
-        $stmt = $con->prepare(
-            "INSERT INTO shops (owner_id, shop_name, business_category, cuisine)
-             VALUES (?, ?, ?, ?)"
-        );
-        $stmt->bind_param('isss', $owner_id, $business_name, $business_category, $cuisine);
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    $con->commit();
-} catch (Throwable $e) {
-    $con->rollback();
-    fail('Something went wrong creating your account. Please try again.');
+if ($token === null) {
+    fail($send_error ?: 'We could not send the verification email. Please try again.');
 }
 
-unset($_SESSION['signup_step']);
-$_SESSION['login_success'] = 'Account created! You can now log in.';
-header('Location: ' . ($role === 'shop' ? '../vendor/vendor_login.php' : '../login/login.php'));
+unset($_SESSION['signup_step'], $_SESSION['signup_old']);
+$_SESSION['pending_signup_token'] = $token;
+header('Location: ../signup/verify_email.php');
 exit;

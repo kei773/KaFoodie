@@ -23,7 +23,13 @@ if ($item_id <= 0 || $shop_id <= 0) {
 }
 
 // Make sure the item really exists, is available, and belongs to that shop
-$stmt = $con->prepare("SELECT id, name FROM menu_items WHERE id = ? AND shop_id = ? AND is_available = 1");
+$stmt = $con->prepare(
+    "SELECT mi.id, mi.name
+     FROM menu_items mi
+     JOIN shops s ON s.id = mi.shop_id
+     WHERE mi.id = ? AND mi.shop_id = ? AND mi.is_available = 1
+       AND s.verification_status = 'approved'"
+);
 $stmt->bind_param('ii', $item_id, $shop_id);
 $stmt->execute();
 $valid = $stmt->get_result()->fetch_assoc();

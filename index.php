@@ -19,6 +19,7 @@ $sql = "
            COUNT(mi.id) AS item_count
     FROM shops s
     LEFT JOIN menu_items mi ON mi.shop_id = s.id AND mi.is_available = 1
+    WHERE s.verification_status = 'approved'
     GROUP BY s.id, s.shop_name, s.description, s.logo_url
     ORDER BY s.shop_name
 ";
@@ -103,7 +104,7 @@ if ($result) {
 
   <?php if (empty($vendors)): ?>
     <div class="dash-card">
-      <p class="dash-empty">No vendors have joined KaFoodie yet — check back soon.</p>
+      <p class="dash-empty">No vendors are open on KaFoodie yet — check back soon.</p>
     </div>
   <?php else: ?>
     <div class="vendor-grid">
