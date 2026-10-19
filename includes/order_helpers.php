@@ -79,7 +79,7 @@ function order_notify(mysqli $con, int $user_id, int $order_id, string $message)
 function order_send_ready_email(mysqli $con, int $order_id): void {
     try {
         $stmt = $con->prepare(
-            "SELECT o.id, o.total_amount, o.payment_method, o.payment_status,
+            "SELECT o.id, o.pickup_code, o.total_amount, o.payment_method, o.payment_status,
                     u.name AS customer_name, u.email AS customer_email, s.shop_name
              FROM orders o
              JOIN users u ON u.id = o.customer_id
@@ -95,6 +95,8 @@ function order_send_ready_email(mysqli $con, int $order_id): void {
         }
 
         $esc   = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+        // Customers see the pickup code in My orders; very old orders without one fall back to the id
+        $code  = (string)($o['pickup_code'] ?: '#' . $o['id']);
         $items = order_items_by_order($con, [$order_id])[$order_id] ?? [];
 
         $rows = '';
@@ -111,18 +113,18 @@ function order_send_ready_email(mysqli $con, int $order_id): void {
 
         $content =
             '<p>Hi ' . $esc($first) . ',</p>'
-          . '<p>Good news! Your order <strong>#' . (int)$o['id'] . '</strong> from <strong>'
+          . '<p>Good news! Your order <strong>' . $esc($code) . '</strong> from <strong>'
           . $esc($o['shop_name']) . '</strong> is ready for pickup.</p>'
           . '<table style="width:100%;border-collapse:collapse;border-top:1px solid #ECD9C9;">' . $rows . '</table>'
           . '<p style="margin:12px 0 0;font-weight:700;">Total: ₱' . number_format((float)$o['total_amount'], 2) . '</p>'
           . $pay
-          . '<p>Tell the shop your order number when you collect it.</p>';
+          . '<p>Tell the shop your pickup code when you collect it.</p>';
 
         require_once __DIR__ . '/mailer.php';
         $error = null;
         $ok = send_mail(
             $o['customer_email'], (string)$o['customer_name'],
-            'Your order #' . (int)$o['id'] . ' is ready for pickup',
+            'Your order ' . $code . ' is ready for pickup',
             mail_layout('Your order is ready', $content),
             $error
         );
@@ -134,24 +136,43 @@ function order_send_ready_email(mysqli $con, int $order_id): void {
     }
 }
 
+/** A short pickup code like "3C839" that no other order has. */
+function order_new_pickup_code(mysqli $con): string {
+    $stmt = $con->prepare("SELECT 1 FROM orders WHERE pickup_code = ? LIMIT 1");
+    for ($i = 0; $i < 20; $i++) {
+        $code = strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
+        $stmt->bind_param('s', $code);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows === 0) {
+            $stmt->close();
+            return $code;
+        }
+    }
+    $stmt->close();
+    throw new RuntimeException('Could not make a unique pickup code.');
+}
+
 /**
- * Saves an order and all its items in one transaction and returns the new order id.
+ * Saves an order and all its items in one transaction.
+ * Returns ['id' => the new order id, 'code' => its pickup code].
  * Throws if anything fails (nothing is saved in that case).
  * $cart comes from kf_load_cart(), so prices and dish names are the database's, never the browser's.
  */
 function order_create(mysqli $con, int $customer_id, array $cart, string $payment_method,
-                      string $payment_status, ?string $transaction_id = null): int {
+                      string $payment_status, ?string $transaction_id = null): array {
     $shop_id = (int)$cart['shop_id'];
     $total   = number_format((float)$cart['total'], 2, '.', '');
 
     try {
         $con->begin_transaction();
 
+        $code = order_new_pickup_code($con);
+
         $stmt = $con->prepare(
-            "INSERT INTO orders (customer_id, shop_id, status, payment_method, payment_status, transaction_id, total_amount)
-             VALUES (?, ?, 'placed', ?, ?, ?, ?)"
+            "INSERT INTO orders (pickup_code, customer_id, shop_id, status, payment_method, payment_status, transaction_id, total_amount)
+             VALUES (?, ?, ?, 'placed', ?, ?, ?, ?)"
         );
-        $stmt->bind_param('iissss', $customer_id, $shop_id, $payment_method, $payment_status, $transaction_id, $total);
+        $stmt->bind_param('siissss', $code, $customer_id, $shop_id, $payment_method, $payment_status, $transaction_id, $total);
         $stmt->execute();
         $order_id = (int)$con->insert_id;
         $stmt->close();
@@ -171,7 +192,7 @@ function order_create(mysqli $con, int $customer_id, array $cart, string $paymen
         $stmt->close();
 
         $con->commit();
-        return $order_id;
+        return ['id' => $order_id, 'code' => $code];
     } catch (Throwable $e) {
         $con->rollback();
         throw $e;
