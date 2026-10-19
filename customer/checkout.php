@@ -98,7 +98,7 @@ $pp = paypal_config();
         <input type="radio" name="payment_method" value="paypal_sandbox"<?= $pp ? '' : ' disabled' ?>>
         <span class="pay-option-text">
           <strong>PayPal</strong>
-          <small><?= $pp ? 'Pay now with PayPal (sandbox test payment, no real money).' : 'Not available yet.' ?></small>
+          <small><?= $pp ? 'Pay now with PayPal' : 'Not available yet.' ?></small>
         </span>
       </label>
 
