@@ -1720,3 +1720,101 @@ a.kf-notif-body:hover{background:var(--cream-2);}
 #paypalButtons{max-width:420px;}
 .pay-status{margin:12px 0 0;font-size:14px;font-weight:600;color:var(--orange-deep);}
 .co-block .alert-error{margin:16px 0 0;}
+
+.btn-primary[hidden],
+.paypal-wrap[hidden],
+.pay-status[hidden],
+.alert-error[hidden]{display:none;}
+
+.paypal-wrap{margin-top:8px;}
+.paypal-note{margin:0 0 14px;font-size:14px;color:var(--text-soft);}
+#paypalButtons{max-width:420px;}
+.pay-status{margin:12px 0 0;font-size:14px;font-weight:600;color:var(--orange-deep);}
+.co-block .alert-error{margin:16px 0 0;}
+
+/* =========================================================
+   Step 7: My orders (Current / Past / Ratings) + pickup codes  (paste at the END of style.css)
+   The earlier ".rate-box / .rate-summary / .rate-form" styles from step 3 are reused.
+   ========================================================= */
+
+/* Pickup code */
+.pickup-code{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin:0 0 16px;padding:14px 18px;
+  background:var(--cream-2);border:1.5px dashed var(--orange);border-radius:var(--radius-sm);
+}
+.pickup-code-label{font-size:13px;font-weight:600;color:var(--text-soft);}
+.pickup-code-value{
+  font-size:28px;font-weight:800;letter-spacing:.18em;color:var(--orange-deep);
+  font-variant-numeric:tabular-nums;
+}
+.pickup-code.is-ready{background:var(--success-bg);border-color:var(--success-text);}
+.pickup-code.is-ready .pickup-code-label,
+.pickup-code.is-ready .pickup-code-value{color:var(--success-text);}
+
+.pickup-chip{
+  display:inline-block;padding:1px 8px;border-radius:6px;
+  background:var(--cream-2);color:var(--orange-deep);
+  font-weight:800;letter-spacing:.08em;
+}
+
+/* A card that a link just jumped to */
+.is-focused{box-shadow:0 0 0 3px var(--orange);}
+
+/* Past orders: compact rows that unfold */
+.past-card{padding:0;}
+.past-details{display:block;}
+.past-summary{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;list-style:none;cursor:pointer;
+}
+.past-summary::-webkit-details-marker{display:none;}
+.past-summary:hover{background:var(--cream);}
+.past-logo{
+  flex:none;width:48px;height:48px;border-radius:12px;overflow:hidden;
+  display:grid;place-items:center;background:var(--peach);font-size:22px;
+}
+.past-logo img{width:100%;height:100%;object-fit:cover;}
+.past-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.past-title{font-size:16px;font-weight:700;overflow-wrap:anywhere;}
+.past-sub{font-size:13px;color:var(--muted);}
+.past-items{font-size:14px;color:var(--text-soft);overflow-wrap:anywhere;}
+.past-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.past-total{font-size:16px;font-weight:800;}
+.past-body{padding:0 20px 8px;border-top:1px solid var(--line-soft);}
+.past-actions{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 20px 16px;border-top:1px solid var(--line-soft);
+}
+.past-actions form{margin:0;}
+.past-btn{
+  padding:8px 18px;border-radius:999px;
+  border:1.5px solid var(--orange-dark);background:var(--white);color:var(--orange-dark);
+  font-size:14px;font-weight:600;
+  transition:background var(--ease),color var(--ease);
+}
+.past-btn:hover{background:var(--orange-dark);color:var(--white);}
+.past-link{font-size:14px;font-weight:600;color:var(--text-soft);text-decoration:none;}
+.past-link:hover{color:var(--orange-dark);text-decoration:underline;}
+.past-link-todo{color:var(--orange-dark);}
+
+/* Ratings tab */
+.rate-card{padding:20px 22px;}
+.rate-card-head{display:flex;align-items:center;gap:14px;}
+.rate-card-title{flex:1;min-width:0;}
+.rate-chip{
+  flex:none;padding:4px 12px;border-radius:999px;
+  font-size:13px;font-weight:700;white-space:nowrap;
+}
+.rate-chip-todo{background:#FFF1D6;color:#8A5A00;}
+.rate-chip-done{background:var(--success-bg);color:var(--success-text);}
+.rate-card .rate-box{margin-top:16px;}
+
+@media (max-width:640px){
+  .past-summary{padding:14px 16px;flex-wrap:wrap;}
+  .past-side{flex-direction:row;align-items:center;justify-content:space-between;width:100%;}
+  .past-body,.past-actions{padding-left:16px;padding-right:16px;}
+  .rate-card{padding:18px;}
+  .rate-card-head{flex-wrap:wrap;}
+  .pickup-code-value{font-size:24px;}
+}
