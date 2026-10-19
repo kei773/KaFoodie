@@ -1,0 +1,4 @@
+includes/mail_config.php
+includes/paypal_config.php
+storage/*
+!storage/.htaccess
